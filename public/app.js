@@ -15,7 +15,7 @@ async function loadProducts() {
             card.className = 'product-card';
             // Используем p.title, так как в базе столбец называется так
             card.innerHTML = `
-                <img src="${p.image_url || ''}" alt="${p.title}" style="width:100%">
+                <img src="piza1.png" alt="${p.title}" style="width:100%">
                 <h3>${p.title}</h3>
                 <p>${p.description || ''}</p>
                 <div class="price">${p.price} грн</div>
