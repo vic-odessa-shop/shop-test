@@ -16,7 +16,7 @@ function createPaymentLink(amount, description, orderId) {
         currency: 'UAH',
         description: description,
         order_id: orderId,
-        result_url: 'https://t.me/your_bot_name' // замени на имя своего бота
+        result_url: 'https://t.me/shop_vic_bot' // замени на имя своего бота
     };
 
     const data = Buffer.from(JSON.stringify(jsonDescription)).toString('base64');
