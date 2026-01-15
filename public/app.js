@@ -16,7 +16,7 @@ async function loadProducts() {
             // Используем p.title, так как в базе столбец называется так
             card.innerHTML = `
                 <img src="piza1.png" alt="${p.title}" style="width:50%">
-                <h3>${p.title}</h3>
+                <h3>пицца</h3>
                 <p>${p.description || ''}</p>
                 <div class="price">${p.price} грн</div>
                 <button id="btn-${p.id}">Додати</button>
