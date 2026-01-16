@@ -1,0 +1,43 @@
+.list-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.categories-bar {
+    display: flex;
+    overflow-x: auto; /* Скролл вбок */
+    padding: 10px;
+    gap: 10px;
+    background: var(--tg-theme-bg-color);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* Скрываем полосу прокрутки */
+.categories-bar::-webkit-scrollbar {
+    display: none;
+}
+
+.cat-btn {
+    padding: 8px 16px;
+    border-radius: 15px;
+    border: none;
+    background: var(--tg-theme-secondary-bg-color);
+    color: var(--tg-theme-text-color);
+    white-space: nowrap; /* Чтобы текст не переносился */
+    cursor: pointer;
+}
+
+.cat-btn.active {
+    background: var(--tg-theme-button-color);
+    color: var(--tg-theme-button-text-color);
+}
+
+.list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    padding: 10px;
+}
