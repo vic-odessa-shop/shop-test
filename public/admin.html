@@ -25,9 +25,9 @@
 <script>
         // ВАЖНО: В реальном проекте токен нельзя светить в HTML!
         // Но для прототипа и обучения мы сделаем так, либо будем запрашивать его при входе.
-        const GITHUB_TOKEN = 'ТВОЙ_ТОКЕН';
-        const REPO_OWNER = 'ТВОЙ_НИК';
-        const REPO_NAME = 'ТВОЙ_РЕПОЗИТОРИЙ';
+        const GITHUB_TOKEN = prompt("Введите секретный ключ доступа:");
+        const REPO_OWNER = 'vic-odessa-shop';
+        const REPO_NAME = 'https://github.com/vic-odessa-shop/shop-test';
         const FILE_PATH = 'products.json';
 
         async function addProduct() {
