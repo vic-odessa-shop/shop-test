@@ -2,53 +2,53 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vic Odessa Shop</title>
     <link rel="stylesheet" href="style.css"> </head>
 <body>
 
-<h1 id="main-title" style="cursor: pointer; user-select: none;">VIC ODESSA SHOP</h1>
+<header>
+    <h1 id="main-title">VIC ODESSA SHOP</h1>
 
-<div id="products-container" class="products-grid">
-</div>
+    <div id="filter-buttons" class="categories">
+        <button onclick="filterProducts('all')">Все</button>
+        <button onclick="filterProducts('Пицца')">Пицца</button>
+        <button onclick="filterProducts('Напитки')">Напитки</button>
+    </div>
+</header>
+
+<main>
+    <div id="products-container" class="products-grid">
+    </div>
+</main>
+
+<footer id="footer">
+    <p>&copy; 2024 Vic Odessa Shop. Все права защищены.</p>
+</footer>
 
 <script>
-        // Конфигурация: путь к твоей базе данных
+        // Глобальные переменные для работы с данными
         const DATA_URL = 'products.json';
+        let allProducts = []; // Здесь будем хранить копию данных для фильтрации
 
-        // Ждем полной загрузки HTML-структуры страницы
+        // Ждем загрузки страницы
         document.addEventListener('DOMContentLoaded', () => {
 
-            // --- 1. ЛОГИКА ВЫВОДА ТОВАРОВ ---
-            const container = document.getElementById('products-container');
-
-            async function loadProducts() {
+            // --- 1. ИНИЦИАЛИЗАЦИЯ МАГАЗИНА ---
+            async function init() {
                 try {
                     const response = await fetch(DATA_URL);
-                    if (!response.ok) throw new Error('Ошибка загрузки JSON');
+                    if (!response.ok) throw new Error('Файл базы данных не найден');
 
-                    const products = await response.json();
-                    renderCards(products);
+                    allProducts = await response.json();
+                    renderCards(allProducts); // Рисуем все товары при старте
                 } catch (error) {
                     console.error('Ошибка:', error);
-                    if (container) container.innerHTML = '<p>Не удалось загрузить товары.</p>';
+                    document.getElementById('products-container').innerHTML = '<p>Ошибка загрузки витрины.</p>';
                 }
             }
 
-            // Функция отрисовки карточек
-            function renderCards(items) {
-                if (!container) return;
-
-                container.innerHTML = items.map(product => `
-                    <div class="product-card">
-                        <img src="${product.image}" alt="${product.name}">
-                        <h3>${product.name}</h3>
-                        <p>Цена: ${product.price} грн</p>
-                        <button onclick="addToCart(${product.id})">Купить</button>
-                    </div>
-                `).join('');
-            }
-
-            // --- 2. СЕКРЕТНЫЙ ВХОД В АДМИНКУ ---
+            // --- 2. СЕКРЕТНЫЙ ВХОД (5 кликов) ---
             const title = document.getElementById('main-title');
             let clicks = 0;
             let timer;
@@ -57,24 +57,49 @@
                 title.addEventListener('click', () => {
                     clicks++;
                     clearTimeout(timer);
-
-                    // Если сделано 5 кликов за 3 секунды
-                    if (clicks === 5) {
-                        window.location.href = 'admin.html';
-                    }
-
-                    // Сброс счетчика через 3 секунды затишья
+                    if (clicks === 5) window.location.href = 'admin.html';
                     timer = setTimeout(() => { clicks = 0; }, 3000);
                 });
             }
 
-            // Запускаем загрузку товаров
-            loadProducts();
+            init(); // Запуск загрузки
         });
 
-        // Функция для кнопки "Купить" (вынесена из DOMContentLoaded для доступа из HTML)
-        function addToCart(productId) {
-            alert('Товар ' + productId + ' добавлен в корзину (функционал в разработке)');
+        // --- 3. ФУНКЦИИ УПРАВЛЕНИЯ ВИТРИНОЙ ---
+
+        // Отрисовка карточек (важно, чтобы структура совпадала со style.css)
+        function renderCards(items) {
+            const container = document.getElementById('products-container');
+            if (!container) return;
+
+            container.innerHTML = items.map(product => `
+                <div class="product-card">
+                    <div class="img-wrapper">
+                        <img src="${product.image}" alt="${product.name}">
+                    </div>
+                    <div class="card-info">
+                        <h3>${product.name}</h3>
+                        <p class="category-tag">${product.category}</p>
+                        <p class="price">${product.price} грн</p>
+                        <button class="buy-btn" onclick="addToCart(${product.id})">В корзину</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Фильтрация товаров по категориям
+        function filterProducts(category) {
+            if (category === 'all') {
+                renderCards(allProducts);
+            } else {
+                const filtered = allProducts.filter(p => p.category === category);
+                renderCards(filtered);
+            }
+        }
+
+        // Заглушка для корзины
+        function addToCart(id) {
+            alert('Товар добавлен! ID: ' + id);
         }
     </script>
 </body>
