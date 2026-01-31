@@ -1,9 +1,56 @@
-body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 20px; text-align: center; }
-h1 { color: #333; }
-#product-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
-.product-card { background: white; border-radius: 12px; padding: 15px; width: 200px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-.product-card img { width: 100%; border-radius: 8px; }
-.product-card h3 { margin: 10px 0; font-size: 18px; }
-.product-card p { color: #888; font-size: 14px; }
-.price { font-weight: bold; color: #2ecc71; font-size: 18px; }
-button { background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+/* Обнуляем отступы */
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    padding: 0;
+    background: #f4f4f7;
+    font-family: sans-serif;
+    padding-bottom: 100px;
+}
+
+/* СЕТКА: Строго 2 колонки */
+#product-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px;
+    padding: 12px;
+}
+
+/* КАРТОЧКА: Чтобы картинки не вылезали */
+.product-card {
+    background: white;
+    border-radius: 12px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Обрезает лишнее */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* КАРТИНКА: Квадратная и по размеру карточки */
+.product-card img {
+    width: 100% !important;
+    height: 120px !important; /* Фиксируем высоту */
+    object-fit: cover; /* Обрезает края, сохраняя пропорции */
+    border-radius: 8px;
+    display: block;
+}
+
+.product-card h3 { font-size: 14px; margin: 8px 0 4px; }
+.product-card p { color: #0088cc; font-weight: bold; margin: 0 0 8px; }
+
+/* КНОПКА КОРЗИНЫ ВНИЗУ */
+#checkout-btn, .main-button {
+    position: fixed;
+    bottom: 20px;
+    left: 5%;
+    width: 90%;
+    background: #0088cc;
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    z-index: 999;
+}
