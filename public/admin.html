@@ -3,40 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shop Manager Pro</title>
+    <title>Shop Manager v3.0</title>
     <style>
-        :root { --primary: #0088cc; --danger: #e74c3c; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 12px; shadow: 0 5px 15px rgba(0,0,0,0.08); }
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        :root { --primary: #0088cc; --danger: #e74c3c; --warn: #f39c12; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .header-actions { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; }
         .tab-btn { padding: 10px 20px; border: none; background: none; cursor: pointer; font-weight: bold; color: #666; }
         .tab-btn.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; }
         th { background: #f8f9fa; padding: 12px; text-align: left; cursor: pointer; border-bottom: 2px solid #dee2e6; }
-        th:hover { background: #e9ecef; }
         td { padding: 12px; border-bottom: 1px solid #eee; }
 
-        .form-group { margin-bottom: 15px; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        button.main-btn { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; width: 100%; }
+        input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .main-btn { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; }
+        .btn-edit { background: var(--warn); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px; }
         .btn-del { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        .secondary-btn { background: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 12px; }
 
-        #log { margin-top: 20px; padding: 10px; border-radius: 6px; display: none; }
-        .error { background: #f8d7da; color: #721c24; display: block !important; }
-        .success { background: #d4edda; color: #155724; display: block !important; }
+        #log { margin: 15px 0; padding: 10px; border-radius: 6px; display: none; }
+        .error { background: #f8d7da; color: #721c24; display: block; }
+        .success { background: #d4edda; color: #155724; display: block; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="form-group">
-        <input type="password" id="gh-token" placeholder="GitHub Token (ghp_...)" onchange="saveToken(this.value)">
+    <div class="header-actions">
+        <input type="password" id="gh-token" style="width: 250px" placeholder="GitHub Token (ghp_...)">
+        <button class="secondary-btn" onclick="saveNewKey()">💾 Зашифровать и сохранить</button>
+        <button class="secondary-btn" style="background: #dc3545" onclick="clearAccess()">🚫 Сбросить всё</button>
     </div>
 
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('list')">📦 Список товаров</button>
-        <button class="tab-btn" onclick="switchTab('add')">➕ Добавить товар</button>
+        <button class="tab-btn active" id="btn-tab-list" onclick="switchTab('list')">📦 Список</button>
+        <button class="tab-btn" id="btn-tab-add" onclick="switchTab('add')">➕ Новый товар</button>
     </div>
 
     <div id="log"></div>
@@ -46,7 +49,7 @@
             <thead>
             <tr>
                 <th onclick="sortTable('name')">Товар ↕</th>
-                <th onclick="sortTable('category')">Категория ↕</th>
+                <th onclick="sortTable('category')">Кат. ↕</th>
                 <th onclick="sortTable('price')">Цена ↕</th>
                 <th>Действие</th>
             </tr>
@@ -56,11 +59,13 @@
     </div>
 
     <div id="tab-add" style="display:none;">
-        <div class="form-group"><input type="text" id="p-name" placeholder="Название"></div>
-        <div class="form-group"><input type="number" id="p-price" placeholder="Цена"></div>
-        <div class="form-group"><input type="text" id="p-cat" placeholder="Категория"></div>
-        <div class="form-group"><input type="text" id="p-img" placeholder="URL картинки"></div>
-        <button class="main-btn" onclick="addProduct()">Сохранить на GitHub</button>
+        <h2 id="form-title">Добавить товар</h2>
+        <input type="text" id="p-name" placeholder="Название">
+        <input type="number" id="p-price" placeholder="Цена">
+        <input type="text" id="p-cat" placeholder="Категория">
+        <input type="text" id="p-img" placeholder="URL картинки">
+        <button class="main-btn" id="save-btn" onclick="processSave()">Сохранить изменения</button>
+        <button class="secondary-btn" style="margin-top:10px; width:100%" onclick="cancelEdit()">Отмена</button>
     </div>
 </div>
 
@@ -69,94 +74,147 @@ const REPO = 'vic-odessa-shop/shop-test';
 const FILE = 'public/products.json';
 let allProducts = [];
 let currentSHA = '';
+let editIndex = null;
 
-// Инициализация
-document.getElementById('gh-token').value = localStorage.getItem('gh_token') || '';
-if(document.getElementById('gh-token').value) loadData();
+// Шифрование XOR
+const crypt = (s, p) => btoa(s.split('').map((c, i) => String.fromCharCode(c.charCodeAt(0) ^ p.charCodeAt(i % p.length))).join(''));
 
-function saveToken(val) { localStorage.setItem('gh_token', val); loadData(); }
+// Загрузка при старте
+window.onload = async () => {
+    const enc = localStorage.getItem('gh_token_enc');
+    if (enc) {
+        const pass = prompt("Введите пароль администратора:");
+        if (pass) {
+            try {
+                const dec = crypt(enc, pass);
+                if (dec.startsWith('ghp_')) {
+                    document.getElementById('gh-token').value = dec;
+                    await loadData();
+                } else { alert("Неверный пароль!"); location.reload(); }
+            } catch(e) { alert("Ошибка ключа!"); }
+        }
+    }
+};
 
-function switchTab(tab) {
-    document.getElementById('tab-list').style.display = tab === 'list' ? 'block' : 'none';
-    document.getElementById('tab-add').style.display = tab === 'add' ? 'block' : 'none';
-    document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', (tab==='list' && i===0) || (tab==='add' && i===1)));
-    if(tab === 'list') loadData();
+function saveNewKey() {
+    const key = document.getElementById('gh-token').value;
+    if(!key.startsWith('ghp_')) return alert("Введите корректный токен!");
+    const pass = prompt("Придумайте пароль для шифрования ключа:");
+    if(pass) {
+        localStorage.setItem('gh_token_enc', crypt(key, pass));
+        alert("Ключ зашифрован. Теперь он доступен только по вашему паролю.");
+        loadData();
+    }
+}
+
+function clearAccess() {
+    if(confirm("Удалить сохраненный ключ из браузера?")) {
+        localStorage.removeItem('gh_token_enc');
+        location.reload();
+    }
 }
 
 async function loadData() {
     const token = document.getElementById('gh-token').value;
-    if(!token) return showLog("Введите токен!", "error");
-
     try {
         const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE}`, {
             headers: { 'Authorization': `token ${token}` }
         });
         const data = await res.json();
         currentSHA = data.sha;
-        const content = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
-        allProducts = JSON.parse(content);
+        allProducts = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\s/g, '')))));
         renderTable(allProducts);
-    } catch (e) { showLog("Ошибка загрузки: " + e.message, "error"); }
+    } catch (e) { showLog("Ошибка: проверьте токен или путь", "error"); }
 }
 
-function renderTable(products) {
-    const tbody = document.getElementById('tableBody');
-    tbody.innerHTML = products.map((p, idx) => `
+function renderTable(data) {
+    document.getElementById('tableBody').innerHTML = data.map((p, idx) => `
         <tr>
             <td>${p.name}</td>
             <td>${p.category}</td>
             <td>${p.price}</td>
-            <td><button class="btn-del" onclick="deleteItem(${idx})">Удалить</button></td>
+            <td>
+                <button class="btn-edit" onclick="startEdit(${idx})">⚙️</button>
+                <button class="btn-del" onclick="deleteItem(${idx})">🗑️</button>
+            </td>
         </tr>
     `).join('');
 }
 
-function sortTable(key) {
-    const sorted = [...allProducts].sort((a, b) => a[key] > b[key] ? 1 : -1);
-    renderTable(sorted);
+function switchTab(tab) {
+    document.getElementById('tab-list').style.display = tab === 'list' ? 'block' : 'none';
+    document.getElementById('tab-add').style.display = tab === 'add' ? 'block' : 'none';
+    document.getElementById('btn-tab-list').classList.toggle('active', tab==='list');
+    document.getElementById('btn-tab-add').classList.toggle('active', tab==='add');
 }
 
-async function addProduct() {
-    const newP = {
-        id: Date.now(),
+function startEdit(idx) {
+    editIndex = idx;
+    const p = allProducts[idx];
+    document.getElementById('p-name').value = p.name;
+    document.getElementById('p-price').value = p.price;
+    document.getElementById('p-cat').value = p.category;
+    document.getElementById('p-img').value = p.image;
+    document.getElementById('form-title').innerText = "Редактирование товара";
+    switchTab('add');
+}
+
+function cancelEdit() {
+    editIndex = null;
+    document.getElementById('p-name').value = '';
+    document.getElementById('form-title').innerText = "Добавить товар";
+    switchTab('list');
+}
+
+async function processSave() {
+    const token = document.getElementById('gh-token').value;
+    const p = {
+        id: editIndex !== null ? allProducts[editIndex].id : Date.now(),
         name: document.getElementById('p-name').value,
         price: parseInt(document.getElementById('p-price').value),
         category: document.getElementById('p-cat').value,
         image: document.getElementById('p-img').value || "https://loremflickr.com/300/300/food"
     };
-    allProducts.push(newP);
-    await syncWithGitHub("Добавлен товар: " + newP.name);
+
+    if (editIndex !== null) allProducts[editIndex] = p;
+    else allProducts.push(p);
+
+    const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(allProducts, null, 2))));
+    const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `token ${token}` },
+        body: JSON.stringify({ message: "Admin update", content: b64, sha: currentSHA })
+    });
+
+    if(res.ok) {
+        showLog("✅ Сохранено!", "success");
+        cancelEdit();
+        loadData();
+    }
 }
 
-async function deleteItem(index) {
-    if(!confirm("Удалить этот товар?")) return;
-    allProducts.splice(index, 1);
-    await syncWithGitHub("Удален товар");
-}
-
-async function syncWithGitHub(msg) {
+async function deleteItem(idx) {
+    if(!confirm("Удалить?")) return;
+    allProducts.splice(idx, 1);
     const token = document.getElementById('gh-token').value;
     const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(allProducts, null, 2))));
-
-    try {
-        const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE}`, {
-            method: 'PUT',
-            headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: msg, content: b64, sha: currentSHA })
-        });
-        if(res.ok) {
-            showLog("✅ Гитхаб обновлен!", "success");
-            loadData();
-            if(document.getElementById('tab-add').style.display === 'block') switchTab('list');
-        }
-    } catch (e) { showLog("Ошибка синхронизации", "error"); }
+    const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `token ${token}` },
+        body: JSON.stringify({ message: "Admin delete", content: b64, sha: currentSHA })
+    });
+    if(res.ok) loadData();
 }
 
-function showLog(text, type) {
+function sortTable(k) {
+    allProducts.sort((a,b) => a[k] > b[k] ? 1 : -1);
+    renderTable(allProducts);
+}
+
+function showLog(t, c) {
     const l = document.getElementById('log');
-    l.innerText = text;
-    l.className = type;
-    setTimeout(() => l.className = '', 3000);
+    l.innerText = t; l.className = c;
+    setTimeout(() => l.style.display = 'none', 3000);
 }
 </script>
 </body>
