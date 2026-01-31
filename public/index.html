@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Vic Odessa Shop</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --main-blue: #0088cc;
@@ -14,11 +15,10 @@
         body {
             font-family: -apple-system, system-ui, sans-serif;
             background: var(--bg-color);
-            margin: 0; padding-bottom: 100px;
+            margin: 0; padding-bottom: 120px;
             color: var(--text-dark);
         }
 
-        /* Шапка: Центрирование заголовка */
         header {
             background: white; padding: 15px 0;
             position: sticky; top: 0; z-index: 100;
@@ -31,7 +31,6 @@
             cursor: pointer; user-select: none; display: inline-block;
         }
 
-        /* Категории товаров */
         .categories {
             display: flex; overflow-x: auto; justify-content: center; padding: 0 10px; gap: 8px;
         }
@@ -43,89 +42,57 @@
         }
         .cat-btn.active { background: var(--main-blue); color: white; }
 
-        /* Сетка товаров (2 колонки на мобилках, адаптив на мониторе) */
         .products-grid {
-            display: grid;
-            gap: 10px;
-            padding: 10px;
-            max-width: 1200px;
-            margin: 0 auto;
-            grid-template-columns: 1fr 1fr;
+            display: grid; gap: 10px; padding: 10px; max-width: 1200px;
+            margin: 0 auto; grid-template-columns: 1fr 1fr;
         }
 
         @media (min-width: 600px) {
-            .products-grid {
-                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-                gap: 20px;
-                padding: 20px;
-            }
+            .products-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; padding: 20px; }
         }
 
         .product-card {
             background: white; border-radius: 15px; padding: 10px;
-            display: flex; flex-direction: column;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-            transition: transform 0.1s;
+            display: flex; flex-direction: column; box-shadow: 0 4px 10px rgba(0,0,0,0.03);
         }
 
-        .product-card img {
-            width: 100%; height: 110px; object-fit: cover; border-radius: 10px;
-        }
+        .product-card img { width: 100%; height: 110px; object-fit: cover; border-radius: 10px; cursor: pointer; }
 
-        @media (min-width: 600px) {
-            .product-card img { height: 160px; }
-        }
+        .product-card h3 { font-size: 14px; margin: 10px 0 5px; height: 34px; overflow: hidden; font-weight: 600; }
 
-        .product-card h3 {
-            font-size: 14px; margin: 10px 0 5px; line-height: 1.2;
-            height: 34px; overflow: hidden; text-align: left; font-weight: 600;
-        }
-
-        .card-footer {
-            display: flex; justify-content: space-between; align-items: center; margin-top: auto;
-        }
+        .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
         .price { font-weight: 800; font-size: 14px; }
 
-        /* Кнопки и счетчики */
         .add-btn {
             background: var(--main-blue); color: white; border: none;
-            width: 28px; height: 28px; border-radius: 50%;
-            font-weight: bold; font-size: 18px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
+            width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer;
         }
 
-        .counter {
-            display: flex; align-items: center; background: #f0f0f0; border-radius: 15px; padding: 2px;
-        }
-        .counter button {
-            background: white; border: 1px solid #ddd; width: 24px; height: 24px;
-            border-radius: 50%; font-weight: bold; cursor: pointer;
-        }
+        .counter { display: flex; align-items: center; background: #f0f0f0; border-radius: 15px; padding: 2px; }
+        .counter button { background: white; border: 1px solid #ddd; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; }
         .counter span { min-width: 20px; text-align: center; font-weight: bold; font-size: 13px; }
 
-        /* Плашка заказа внизу */
+        /* Поля ввода (изначально скрыты) */
+        #customer-info {
+            background: white; padding: 15px; margin: 15px; border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: none;
+        }
+        #customer-info input {
+            width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd;
+            border-radius: 10px; box-sizing: border-box; font-size: 16px;
+        }
+
         #order-bar {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 400px;
-            background: var(--main-blue); color: white; padding: 14px;
-            border-radius: 14px; display: none; text-align: center;
+            width: 90%; max-width: 400px; background: var(--main-blue); color: white;
+            padding: 14px; border-radius: 14px; display: none; text-align: center;
             font-weight: bold; cursor: pointer; z-index: 1000;
         }
 
-        /* Модальное окно описания */
-        .modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000;
-        }
-        .modal-content {
-            background: white; padding: 20px; border-radius: 20px; width: 80%; max-width: 400px;
-            text-align: left; position: relative;
-        }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        .modal-content { background: white; padding: 20px; border-radius: 20px; width: 80%; max-width: 400px; position: relative; }
         .close-modal { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; }
-        .info-btn {
-            background: #eee; border: none; width: 24px; height: 24px;
-            border-radius: 50%; font-size: 14px; cursor: pointer;
-        }
+        .info-btn { background: #eee; border: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -142,15 +109,14 @@
 
 <main class="products-grid" id="container"></main>
 
-
-<div id="customer-info" style="background: white; padding: 15px; margin: 10px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.03);">
-    <h4 style="margin-top: 0;">Контактные данные:</h4>
-    <input type="text" id="cust-name" placeholder="Ваше имя" style="width: 90%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px;">
-    <input type="tel" id="cust-phone" placeholder="Номер телефона" style="width: 90%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+<div id="customer-info">
+    <h4 style="margin: 0 0 10px 0;">Контактні дані:</h4>
+    <input type="text" id="cust-name" placeholder="Ваше ім'я">
+    <input type="tel" id="cust-phone" placeholder="Номер телефону">
 </div>
 
 <div id="order-bar" onclick="sendOrder()">
-     Заказать: <span id="total-price">0</span> грн
+    Замовити: <span id="total-price">0</span> грн
 </div>
 
 <div id="desc-modal" class="modal">
@@ -162,19 +128,13 @@
 </div>
 
 <script>
-//  получить Telegram ID автоматически
-const tg = window.Telegram.WebApp;
-const userNickname = tg.initDataUnsafe?.user?.username || "нет никнейма";
-const userId = tg.initDataUnsafe?.user?.id || "неизвестно";
-
-// И в текст сообщения в sendOrder добавь:
-message += `🆔 *TG ID:* ${userId} (@${userNickname})\n`;
-
+    // Работа с Telegram WebApp
+    const tg = window.Telegram.WebApp;
+    tg.expand(); // Развернуть на весь экран
 
     const DATA_URL = 'products.json';
-    // --- ПЕДАНТИЧНАЯ НАСТРОЙКА ---
-    const RENDER_API_URL = 'https://shop-test-zcei.onrender.com/api/send-order'; // Вставь свой URL
-    const TARGET_CHAT_ID = '5447056649'; // Вставь ID куда слать заказ
+    const RENDER_API_URL = 'https://shop-test-zcei.onrender.com/api/send-order';
+    const TARGET_CHAT_ID = '5447056649';
 
     let allProducts = [];
     let cart = {};
@@ -184,9 +144,13 @@ message += `🆔 *TG ID:* ${userId} (@${userNickname})\n`;
             const res = await fetch(DATA_URL);
             allProducts = await res.json();
             render(allProducts);
-        } catch (e) { console.error("Ошибка загрузки товаров"); }
 
-        // Секретный вход в админку
+            // Если зашли через ТГ, попробуем подставить имя
+            if (tg.initDataUnsafe?.user?.first_name) {
+                document.getElementById('cust-name').value = tg.initDataUnsafe.user.first_name;
+            }
+        } catch (e) { console.error("Ошибка загрузки"); }
+
         const title = document.getElementById('main-title');
         let clicks = 0;
         title.addEventListener('click', () => {
@@ -196,24 +160,17 @@ message += `🆔 *TG ID:* ${userId} (@${userNickname})\n`;
         });
     });
 
-    // Отрисовка витрины
     function render(items) {
         const container = document.getElementById('container');
-        if (!container) return;
-
         container.innerHTML = items.map(p => {
             const qty = cart[p.id] || 0;
             return `
             <div class="product-card">
-                <img src="${p.image || 'https://via.placeholder.com/150'}"
-                     onclick="showDesc('${p.name}', '${p.description || ''}')"
-                     style="cursor:pointer" alt="">
-
+                <img src="${p.image || 'https://via.placeholder.com/150'}" onclick="showDesc('${p.name}', '${p.description || ''}')">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px;">
                     <h3>${p.name}</h3>
                     <button class="info-btn" onclick="showDesc('${p.name}', '${p.description || ''}')">ⓘ</button>
                 </div>
-
                 <div class="card-footer">
                     <div class="price">${p.price} грн</div>
                     ${qty > 0 ? `
@@ -243,90 +200,82 @@ message += `🆔 *TG ID:* ${userId} (@${userNickname})\n`;
             const p = allProducts.find(item => item.id == id);
             if (p) total += p.price * cart[id];
         });
+
         const bar = document.getElementById('order-bar');
+        const info = document.getElementById('customer-info');
+
         if (total > 0) {
             bar.style.display = 'block';
+            info.style.display = 'block'; // Показываем поля ввода
             document.getElementById('total-price').innerText = total;
         } else {
             bar.style.display = 'none';
+            info.style.display = 'none'; // Прячем поля ввода
         }
     }
 
     function filterItems(cat, btn) {
         document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        if (cat === 'all') render(allProducts);
-        else render(allProducts.filter(p => p.category === cat));
+        render(cat === 'all' ? allProducts : allProducts.filter(p => p.category === cat));
     }
 
-    // Модальное окно
     function showDesc(name, desc) {
         document.getElementById('modal-title').innerText = name;
-        document.getElementById('modal-text').innerText = desc || "Вкуснейшее блюдо по нашему фирменному рецепту!";
+        document.getElementById('modal-text').innerText = desc || "Смачна страва за нашим рецептом!";
         document.getElementById('desc-modal').style.display = 'flex';
     }
 
-    function closeDesc() {
-        document.getElementById('desc-modal').style.display = 'none';
-    }
+    function closeDesc() { document.getElementById('desc-modal').style.display = 'none'; }
 
-    // ОТПРАВКА ЗАКАЗА НА СЕРВЕР RENDER
-// Теперь нам нужно заставить функцию проверять эти поля
-// и добавлять их в текст сообщения.
+    async function sendOrder() {
+        const name = document.getElementById('cust-name').value;
+        const phone = document.getElementById('cust-phone').value;
 
-async function sendOrder() {
-// 1. Берем данные из полей
-    const name = document.getElementById('cust-name').value;
-    const phone = document.getElementById('cust-phone').value;
+        if (!name || !phone) {
+            alert("Будь ласка, введіть ім'я та телефон!");
+            return;
+        }
 
-// 2. Проверяем, заполнил ли их клиент
-    if (!name || !phone) {
-        alert("Пожалуйста, введите имя и номер телефона!");
-        return;
-    }
-
-// 3. Собираем текст заказа
-        let message = `👤 *Новое замовлення!*\n`;
+        let message = `👤 *Нове замовлення!*\n`;
         message += `━━━━━━━━━━━━━━━━━━\n`;
-        message += `👤 *Клиент:* ${name}\n`;
+        message += `👤 *Клієнт:* ${name}\n`;
         message += `📞 *Телефон:* ${phone}\n`;
+
+        // Добавляем инфо из Telegram если есть
+        if (tg.initDataUnsafe?.user) {
+            const user = tg.initDataUnsafe.user;
+            message += `🆔 *TG ID:* ${user.id} (@${user.username || 'no_nick'})\n`;
+        }
+
         message += `━━━━━━━━━━━━━━━━━━\n\n`;
 
         let total = 0;
         Object.keys(cart).forEach(id => {
-        const p = allProducts.find(item => item.id == id);
-        if (p) {
-            const sum = p.price * cart[id];
-            message += `🔹 *${p.name}* x ${cart[id]} = ${sum} грн\n`;
-            total += sum;
-        }
+            const p = allProducts.find(item => item.id == id);
+            if (p) {
+                const sum = p.price * cart[id];
+                message += `🔹 *${p.name}* x ${cart[id]} = ${sum} грн\n`;
+                total += sum;
+            }
         });
 
-        message += `\n━━━━━━━━━━━━━━━━━━\n`;
-        message += `💰 *ИТОГО: ${total} грн*`;
+        message += `\n━━━━━━━━━━━━━━━━━━\n💰 *РАЗОМ: ${total} грн*`;
 
-// 4. Отправляем (адрес тот же)
         try {
             const response = await fetch(RENDER_API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-            order: message,
-            chat_id: TARGET_CHAT_ID
-        }           )
-    });
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ order: message, chat_id: TARGET_CHAT_ID })
+            });
 
-if (response.ok) {
-alert("✅ Заказ принят, " + name + "! Мы вам перезвоним.");
-cart = {};
-document.getElementById('cust-name').value = '';
-document.getElementById('cust-phone').value = '';
-render(allProducts);
-}
-} catch (e) {
-alert("Ошибка связи.");
-}
-}
+            if (response.ok) {
+                alert("✅ Замовлення прийнято! Ми вам зателефонуємо.");
+                cart = {};
+                render(allProducts);
+            }
+        } catch (e) { alert("Помилка зв'язку з сервером."); }
+    }
 </script>
 </body>
 </html>
