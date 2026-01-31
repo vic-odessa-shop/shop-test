@@ -1,37 +1,44 @@
 [
   {
-      "id": 1,
-      "name": "Товар 1",
-      "price": 100,
-      "image": "https://loremflickr.com/300/300/food?random=1",
-      "category": "Пицца"
+    "id": 1,
+    "name": "Товар 1",
+    "price": 100,
+    "image": "https://loremflickr.com/300/300/food?random=1",
+    "category": "Пицца"
   },
   {
-      "id": 2,
-      "name": "Товар 2",
-      "price": 200,
-      "image": "https://loremflickr.com/300/300/food?random=2",
-      "category": "Бургеры"
+    "id": 2,
+    "name": "Товар 2",
+    "price": 200,
+    "image": "https://loremflickr.com/300/300/food?random=2",
+    "category": "Бургеры"
   },
   {
-      "id": 3,
-      "name": "Товар 3",
-      "price": 300,
-      "image": "https://loremflickr.com/300/300/food?random=3",
-      "category": "Напитки"
+    "id": 3,
+    "name": "Товар 3",
+    "price": 300,
+    "image": "https://loremflickr.com/300/300/food?random=3",
+    "category": "Напитки"
   },
   {
-      "id": 4,
-      "name": "Товар 4",
-      "price": 400,
-      "image": "https://loremflickr.com/300/300/food?random=4",
-      "category": "Пицца"
+    "id": 4,
+    "name": "Товар 4",
+    "price": 400,
+    "image": "https://loremflickr.com/300/300/food?random=4",
+    "category": "Пицца"
   },
   {
-      "id": 5,
-      "name": "Товар 5",
-      "price": 500,
-      "image": "https://loremflickr.com/300/300/food?random=5",
-      "category": "Бургеры"
+    "id": 5,
+    "name": "Товар 5",
+    "price": 500,
+    "image": "https://loremflickr.com/300/300/food?random=5",
+    "category": "Бургеры"
+  },
+  {
+    "id": 1769869577988,
+    "name": "тест",
+    "price": 777,
+    "category": "Пицца",
+    "image": "https://loremflickr.com/300/300/food?random=5"
   }
 ]
