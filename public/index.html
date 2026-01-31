@@ -3,13 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vic Odessa Shop</title>
-    <link rel="stylesheet" href="style.css"> </head>
+    <title>Vic Odessa Shop — Витрина</title>
+
+    <style>
+        /* --- СТИЛИ МАГАЗИНА --- */
+        :root { --main-color: #0088cc; --bg-color: #f4f4f4; }
+        body { font-family: 'Arial', sans-serif; background: var(--bg-color); margin: 0; padding: 0; text-align: center; }
+
+        header { background: #fff; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); sticky: top; }
+        #main-title { cursor: pointer; color: var(--main-color); user-select: none; }
+
+        /* Кнопки категорий */
+        .categories { margin: 20px 0; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+        .categories button { padding: 10px 20px; border: none; background: #ddd; border-radius: 20px; cursor: pointer; transition: 0.3s; }
+        .categories button:hover { background: var(--main-color); color: white; }
+
+        /* Сетка товаров */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Карточка товара */
+        .product-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+        .product-card:hover { transform: translateY(-5px); }
+        .product-card img { width: 100%; height: 200px; object-fit: cover; }
+        .card-info { padding: 15px; }
+        .price { font-weight: bold; color: var(--main-color); font-size: 1.2em; }
+        .buy-btn {
+            background: var(--main-color); color: white; border: none;
+            padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 10px;
+        }
+
+        /* Стиль для всплывающего уведомления */
+#toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 12px 25px;
+    border-radius: 30px;
+    font-size: 14px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    display: none; /* По умолчанию скрыто */
+    z-index: 1000;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from { bottom: -50px; opacity: 0; }
+    to { bottom: 20px; opacity: 1; }
+}
+        footer { background: #333; color: white; padding: 20px; margin-top: 40px; }
+    </style>
+</head>
 <body>
 
+<div id="toast">Товар добавлен в корзину! 🛒</div>
 <header>
     <h1 id="main-title">VIC ODESSA SHOP</h1>
-
     <div id="filter-buttons" class="categories">
         <button onclick="filterProducts('all')">Все</button>
         <button onclick="filterProducts('Пицца')">Пицца</button>
@@ -22,37 +86,34 @@
     </div>
 </main>
 
-<footer id="footer">
-    <p>&copy; 2024 Vic Odessa Shop. Все права защищены.</p>
+<footer>
+    <p>&copy; 2024 Vic Odessa Shop. Работает на GitHub & Render.</p>
 </footer>
 
 <script>
-        // Глобальные переменные для работы с данными
+        // --- ЛОГИКА МАГАЗИНА ---
         const DATA_URL = 'products.json';
-        let allProducts = []; // Здесь будем хранить копию данных для фильтрации
+        let allProducts = [];
 
-        // Ждем загрузки страницы
+        // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', () => {
 
-            // --- 1. ИНИЦИАЛИЗАЦИЯ МАГАЗИНА ---
-            async function init() {
+            // Загрузка товаров
+            async function loadData() {
                 try {
                     const response = await fetch(DATA_URL);
-                    if (!response.ok) throw new Error('Файл базы данных не найден');
-
                     allProducts = await response.json();
-                    renderCards(allProducts); // Рисуем все товары при старте
-                } catch (error) {
-                    console.error('Ошибка:', error);
-                    document.getElementById('products-container').innerHTML = '<p>Ошибка загрузки витрины.</p>';
+                    renderCards(allProducts);
+                } catch (e) {
+                    console.error("Ошибка загрузки:", e);
+                    document.getElementById('products-container').innerHTML = "Ошибка загрузки товаров.";
                 }
             }
 
-            // --- 2. СЕКРЕТНЫЙ ВХОД (5 кликов) ---
+            // Секретный вход в админку (5 кликов по заголовку)
             const title = document.getElementById('main-title');
             let clicks = 0;
             let timer;
-
             if (title) {
                 title.addEventListener('click', () => {
                     clicks++;
@@ -62,45 +123,49 @@
                 });
             }
 
-            init(); // Запуск загрузки
+            loadData();
         });
 
-        // --- 3. ФУНКЦИИ УПРАВЛЕНИЯ ВИТРИНОЙ ---
-
-        // Отрисовка карточек (важно, чтобы структура совпадала со style.css)
+        // Функция отрисовки карточек
         function renderCards(items) {
             const container = document.getElementById('products-container');
-            if (!container) return;
-
-            container.innerHTML = items.map(product => `
+            container.innerHTML = items.map(p => `
                 <div class="product-card">
-                    <div class="img-wrapper">
-                        <img src="${product.image}" alt="${product.name}">
-                    </div>
+                    <img src="${p.image}" alt="${p.name}">
                     <div class="card-info">
-                        <h3>${product.name}</h3>
-                        <p class="category-tag">${product.category}</p>
-                        <p class="price">${product.price} грн</p>
-                        <button class="buy-btn" onclick="addToCart(${product.id})">В корзину</button>
+                        <h3>${p.name}</h3>
+                        <p style="color: #888; font-size: 0.9em;">${p.category}</p>
+                        <p class="price">${p.price} грн</p>
+                        <button class="buy-btn" onclick="addToCart(${p.id})">В корзину</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        // Фильтрация товаров по категориям
-        function filterProducts(category) {
-            if (category === 'all') {
-                renderCards(allProducts);
-            } else {
-                const filtered = allProducts.filter(p => p.category === category);
-                renderCards(filtered);
-            }
+        // Фильтрация
+        function filterProducts(cat) {
+            if (cat === 'all') renderCards(allProducts);
+            else renderCards(allProducts.filter(p => p.category === cat));
         }
 
-        // Заглушка для корзины
-        function addToCart(id) {
-            alert('Товар добавлен! ID: ' + id);
-        }
+        // Заглушка для покупки
+        // Функция добавления в корзину с красивым уведомлением
+function addToCart(id) {
+    // Находим товар по ID, чтобы написать его имя в уведомлении
+    const product = allProducts.find(p => p.id === id);
+    const toast = document.getElementById('toast');
+
+    toast.innerText = `✅ ${product ? product.name : 'Товар'} добавлен!`;
+    toast.style.display = 'block';
+
+    // Скрываем уведомление через 2 секунды
+    setTimeout(() => {
+        toast.style.display = 'none';
+    }, 2000);
+
+    // Здесь в будущем будет логика сохранения в localStorage корзины
+    console.log("Добавлено в корзину:", id);
+}
     </script>
 </body>
 </html>
