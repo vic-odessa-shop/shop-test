@@ -18,12 +18,12 @@
             color: var(--text-dark);
         }
 
-        /* Шапка: Центрирование заголовка */
+        /* Шапка: Центрирование */
         header {
             background: white; padding: 15px 0;
             position: sticky; top: 0; z-index: 100;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            text-align: center; /* Центрируем всё содержимое шапки */
+            text-align: center;
         }
 
         #main-title {
@@ -31,78 +31,91 @@
             cursor: pointer; user-select: none; display: inline-block;
         }
 
-        /* Категории: Скролл на мобилках, центр на ПК */
+        /* Категории */
         .categories {
             display: flex; overflow-x: auto; justify-content: center; padding: 0 10px; gap: 8px;
         }
-        /* Убираем скроллбар для красоты */
         .categories::-webkit-scrollbar { display: none; }
 
         .cat-btn {
-            background: #ebebeb; border: none; padding: 8px 18px;
-            border-radius: 20px; white-space: nowrap; font-weight: 500; cursor: pointer;
+            background: #ebebeb; border: none; padding: 8px 15px;
+            border-radius: 20px; white-space: nowrap; font-weight: 500; cursor: pointer; font-size: 14px;
         }
         .cat-btn.active { background: var(--main-blue); color: white; }
 
-        /* Адаптивная сетка: 2 колонки на мобилках, много на мониторе */
+        /* --- АДАПТИВНАЯ СЕТКА (ГЛАВНОЕ ИСПРАВЛЕНИЕ) --- */
         .products-grid {
             display: grid;
-            /* minmax(160px, 1fr) не дает карточке быть слишком узкой или слишком широкой */
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 15px; padding: 15px;
-            max-width: 1200px; margin: 0 auto;
+            gap: 10px;
+            padding: 10px;
+            max-width: 1200px;
+            margin: 0 auto;
+            /* По умолчанию 2 колонки для мобильных */
+            grid-template-columns: 1fr 1fr;
+        }
+
+        /* Для планшетов и мониторов (больше 600px) */
+        @media (min-width: 600px) {
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                gap: 20px;
+                padding: 20px;
+            }
         }
 
         .product-card {
-            background: white; border-radius: 18px; padding: 12px;
+            background: white; border-radius: 15px; padding: 10px;
             display: flex; flex-direction: column;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-            transition: transform 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+            transition: transform 0.1s;
         }
-        .product-card:active { transform: scale(0.97); }
 
         .product-card img {
-            width: 100%; height: 140px; object-fit: cover; border-radius: 12px;
+            width: 100%;
+            height: 110px; /* Фиксированная высота для мобилок */
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        @media (min-width: 600px) {
+            .product-card img { height: 160px; }
         }
 
         .product-card h3 {
-            font-size: 15px; margin: 12px 0 8px; line-height: 1.2;
-            height: 36px; overflow: hidden; text-align: left;
+            font-size: 14px; margin: 10px 0 5px; line-height: 1.2;
+            height: 34px; overflow: hidden; text-align: left;
+            font-weight: 600;
         }
 
-        /* Футер карточки: Цена + Кнопки */
         .card-footer {
             display: flex; justify-content: space-between; align-items: center; margin-top: auto;
         }
-        .price { font-weight: 800; font-size: 16px; color: var(--text-dark); }
+        .price { font-weight: 800; font-size: 14px; }
 
-        /* Кнопка + и Счетчик */
         .add-btn {
             background: var(--main-blue); color: white; border: none;
-            width: 32px; height: 32px; border-radius: 50%;
-            font-weight: bold; font-size: 20px; cursor: pointer;
+            width: 28px; height: 28px; border-radius: 50%;
+            font-weight: bold; font-size: 18px; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
         }
 
         .counter {
             display: flex; align-items: center; background: #f0f0f0;
-            border-radius: 20px; color: var(--text-dark); padding: 2px;
+            border-radius: 15px; padding: 2px;
         }
         .counter button {
-            background: white; border: 1px solid #ddd; color: var(--text-dark);
-            width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer;
+            background: white; border: 1px solid #ddd; width: 24px; height: 24px;
+            border-radius: 50%; font-weight: bold; cursor: pointer;
         }
-        .counter span { min-width: 25px; text-align: center; font-weight: bold; font-size: 14px; }
+        .counter span { min-width: 20px; text-align: center; font-weight: bold; font-size: 13px; }
 
-        /* Плашка заказа */
+        /* Панель заказа */
         #order-bar {
-            position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 400px;
-            background: var(--main-blue); color: white; padding: 16px;
-            border-radius: 16px; display: none; text-align: center;
-            font-weight: bold; font-size: 17px; cursor: pointer;
-            box-shadow: 0 10px 25px rgba(0,136,204,0.3);
-            z-index: 1000;
+            background: var(--main-blue); color: white; padding: 14px;
+            border-radius: 14px; display: none; text-align: center;
+            font-weight: bold; cursor: pointer; z-index: 1000;
         }
     </style>
 </head>
@@ -121,11 +134,11 @@
 <main class="products-grid" id="container"></main>
 
 <div id="order-bar" onclick="sendOrder()">
-    Оформить заказ: <span id="total-price">0</span> грн
+    Заказать: <span id="total-price">0</span> грн
 </div>
 
 <script>
-        // --- ЛОГИКА ---
+        // --- ЛОГИКА ОСТАЕТСЯ ПРЕЖНЕЙ ---
         const DATA_URL = 'products.json';
         let allProducts = [];
         let cart = {};
@@ -137,7 +150,6 @@
                 render(allProducts);
             } catch (e) { console.error("Ошибка базы"); }
 
-            // Секретный вход (центр заголовка)
             const title = document.getElementById('main-title');
             let clicks = 0;
             title.addEventListener('click', () => {
@@ -153,7 +165,7 @@
                 const qty = cart[p.id] || 0;
                 return `
                 <div class="product-card">
-                    <img src="${p.image || 'https://via.placeholder.com/150'}" alt="${p.name}">
+                    <img src="${p.image || 'https://via.placeholder.com/150'}" alt="">
                     <h3>${p.name}</h3>
                     <div class="card-footer">
                         <div class="price">${p.price} грн</div>
@@ -184,7 +196,6 @@
                 const p = allProducts.find(item => item.id == id);
                 if (p) total += p.price * cart[id];
             });
-
             const bar = document.getElementById('order-bar');
             if (total > 0) {
                 bar.style.display = 'block';
@@ -202,7 +213,7 @@
         }
 
         function sendOrder() {
-            alert("Ваш заказ на сумму " + document.getElementById('total-price').innerText + " грн принят!");
+            alert("Заказ на сумму " + document.getElementById('total-price').innerText + " грн принят!");
         }
     </script>
 </body>
