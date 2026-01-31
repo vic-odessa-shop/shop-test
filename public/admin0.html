@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Панель управления</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f9; }
+        .item-form { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input { display: block; width: 100%; margin: 10px 0; padding: 8px; box-sizing: border-box; }
+        button { background: #0088cc; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        #status { margin-top: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+<h2>Добавить новый товар</h2>
+<div class="item-form">
+    <input type="text" id="name" placeholder="Название товара">
+    <input type="number" id="price" placeholder="Цена (₽)">
+    <input type="text" id="category" placeholder="Категория (Пицца, Напитки...)">
+    <input type="text" id="image" placeholder="Ссылка на картинку">
+    <button onclick="addProduct()">Добавить в меню</button>
+    <div id="status"></div>
+</div>
+
+<script>
+        // ВАЖНО: В реальном проекте токен нельзя светить в HTML!
+        // Но для прототипа и обучения мы сделаем так, либо будем запрашивать его при входе.
+        const GITHUB_TOKEN = prompt("Введите секретный ключ доступа:");
+        const REPO_OWNER = 'vic-odessa-shop';
+        const REPO_NAME = 'shop-test';
+        const FILE_PATH = 'products.json';
+
+        const CONFIG = {
+    owner: 'vic-odessa-shop', // Ваш логин организации/пользователя
+    repo: 'shop-test',        // Название репозитория
+    path: 'products.json'     // Название файла
+};
+
+
+
+        async function addProduct() {
+            const status = document.getElementById('status');
+            status.innerText = "⏳ Сохраняю...";
+
+            try {
+                // 1. Получаем текущий файл, чтобы узнать его SHA (версию)
+                const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`);
+                const fileData = await res.json();
+                const sha = fileData.sha;
+             //   const content = JSON.parse(atob(fileData.content)); // Декодируем из Base64
+
+                // 1. Получаем текущий файл
+const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+const res = await fetch(url, {
+    headers: { 'Authorization': `token ${token}` }
+});
+
+if (!res.ok) throw new Error("Файл не найден. Проверьте REPO_NAME и OWNER.");
+
+const fileData = await res.json();
+
+// РАСШИФРОВКА (исправляет DOMException для кириллицы)
+const products = JSON.parse(decodeURIComponent(escape(atob(fileData.content.replace(/\s/g, '')))));
+
+
+
+                // 2. Добавляем новый товар
+                const newItem = {
+                    id: Date.now(),
+                    name: document.getElementById('name').value,
+                    price: parseInt(document.getElementById('price').value),
+                    category: document.getElementById('category').value,
+                    image: document.getElementById('image').value
+                };
+                content.push(newItem);
+
+                // 3. Отправляем обновленный файл обратно
+                const updateRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${GITHUB_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: "Обновление меню через админку",
+                        content: btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2)))),
+                        sha: sha
+                    })
+                });
+
+                if (updateRes.ok) {
+                    status.innerText = "✅ Товар добавлен! Обновите магазин через минуту.";
+                } else {
+                    status.innerText = "❌ Ошибка сохранения.";
+                }
+            } catch (e) {
+                console.error(e);
+                status.innerText = "❌ Ошибка связи с GitHub.";
+            }
+        }
+    </script>
+</body>
+</html>
