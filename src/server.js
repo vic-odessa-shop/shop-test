@@ -12,7 +12,23 @@ const app = express();
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
 // --- НАСТРОЙКИ СЕРВЕРА (Middleware) ---
+require('dotenv').config();
+const express = require('express');
+const path = require('path');
+const { Telegraf, Markup } = require('telegraf');
+const cors = require('cors'); // 1. Убедись, что эта строка есть
 
+const app = express();
+
+// 2. ВНИМАНИЕ: Это должно стоять ВЫШЕ всех остальных app.use и app.post
+app.use(cors({
+    origin: '*', // Разрешает запросы с любого адреса (включая твой GitHub)
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type']
+}));
+
+app.use(express.json());
+// ... остальной код (static, bot, api) ...
 // 1. Разрешаем запросы с других адресов (чтобы твой сайт мог достучаться до сервера на Render)
 app.use(cors());
 
