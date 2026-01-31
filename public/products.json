@@ -40,5 +40,12 @@
     "price": 777,
     "category": "Пицца",
     "image": "https://loremflickr.com/300/300/food?random=5"
+  },
+  {
+    "id": 1769869724920,
+    "name": "тест2",
+    "price": 888,
+    "category": "Пицца",
+    "image": "https://loremflickr.com/300/300/food?random=5"
   }
 ]
