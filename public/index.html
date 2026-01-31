@@ -18,7 +18,7 @@
             color: var(--text-dark);
         }
 
-        /* Шапка: Центрирование */
+        /* Шапка: Центрирование заголовка */
         header {
             background: white; padding: 15px 0;
             position: sticky; top: 0; z-index: 100;
@@ -31,7 +31,7 @@
             cursor: pointer; user-select: none; display: inline-block;
         }
 
-        /* Категории */
+        /* Категории товаров */
         .categories {
             display: flex; overflow-x: auto; justify-content: center; padding: 0 10px; gap: 8px;
         }
@@ -43,18 +43,16 @@
         }
         .cat-btn.active { background: var(--main-blue); color: white; }
 
-        /* --- АДАПТИВНАЯ СЕТКА (ГЛАВНОЕ ИСПРАВЛЕНИЕ) --- */
+        /* Сетка товаров (2 колонки на мобилках, адаптив на мониторе) */
         .products-grid {
             display: grid;
             gap: 10px;
             padding: 10px;
             max-width: 1200px;
             margin: 0 auto;
-            /* По умолчанию 2 колонки для мобильных */
             grid-template-columns: 1fr 1fr;
         }
 
-        /* Для планшетов и мониторов (больше 600px) */
         @media (min-width: 600px) {
             .products-grid {
                 grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -71,10 +69,7 @@
         }
 
         .product-card img {
-            width: 100%;
-            height: 110px; /* Фиксированная высота для мобилок */
-            object-fit: cover;
-            border-radius: 10px;
+            width: 100%; height: 110px; object-fit: cover; border-radius: 10px;
         }
 
         @media (min-width: 600px) {
@@ -83,8 +78,7 @@
 
         .product-card h3 {
             font-size: 14px; margin: 10px 0 5px; line-height: 1.2;
-            height: 34px; overflow: hidden; text-align: left;
-            font-weight: 600;
+            height: 34px; overflow: hidden; text-align: left; font-weight: 600;
         }
 
         .card-footer {
@@ -92,6 +86,7 @@
         }
         .price { font-weight: 800; font-size: 14px; }
 
+        /* Кнопки и счетчики */
         .add-btn {
             background: var(--main-blue); color: white; border: none;
             width: 28px; height: 28px; border-radius: 50%;
@@ -100,8 +95,7 @@
         }
 
         .counter {
-            display: flex; align-items: center; background: #f0f0f0;
-            border-radius: 15px; padding: 2px;
+            display: flex; align-items: center; background: #f0f0f0; border-radius: 15px; padding: 2px;
         }
         .counter button {
             background: white; border: 1px solid #ddd; width: 24px; height: 24px;
@@ -109,7 +103,7 @@
         }
         .counter span { min-width: 20px; text-align: center; font-weight: bold; font-size: 13px; }
 
-        /* Панель заказа */
+        /* Плашка заказа внизу */
         #order-bar {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 400px;
@@ -118,20 +112,20 @@
             font-weight: bold; cursor: pointer; z-index: 1000;
         }
 
-        /* Модальное окно для описания */
-.modal {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000;
-}
-.modal-content {
-    background: white; padding: 20px; border-radius: 20px; width: 80%; max-width: 400px;
-    text-align: left; position: relative;
-}
-.close-modal { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; }
-.info-btn {
-    background: #eee; border: none; width: 24px; height: 24px;
-    border-radius: 50%; font-size: 14px; cursor: pointer; margin-left: 5px;
-}
+        /* Модальное окно описания */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000;
+        }
+        .modal-content {
+            background: white; padding: 20px; border-radius: 20px; width: 80%; max-width: 400px;
+            text-align: left; position: relative;
+        }
+        .close-modal { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; }
+        .info-btn {
+            background: #eee; border: none; width: 24px; height: 24px;
+            border-radius: 50%; font-size: 14px; cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -161,131 +155,143 @@
 </div>
 
 <script>
-        // --- ЛОГИКА ОСТАЕТСЯ ПРЕЖНЕЙ ---
-        const DATA_URL = 'products.json';
-        let allProducts = [];
-        let cart = {};
+    const DATA_URL = 'products.json';
+    // --- ПЕДАНТИЧНАЯ НАСТРОЙКА ---
+    const RENDER_API_URL = 'https://shop-test-zcei.onrender.com/api/send-order'; // Вставь свой URL
+    const TARGET_CHAT_ID = '5447056649'; // Вставь ID куда слать заказ
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                const res = await fetch(DATA_URL);
-                allProducts = await res.json();
-                render(allProducts);
-            } catch (e) { console.error("Ошибка базы"); }
+    let allProducts = [];
+    let cart = {};
 
-            const title = document.getElementById('main-title');
-            let clicks = 0;
-            title.addEventListener('click', () => {
-                clicks++;
-                if (clicks === 5) window.location.href = 'admin.html';
-                setTimeout(() => clicks = 0, 3000);
-            });
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const res = await fetch(DATA_URL);
+            allProducts = await res.json();
+            render(allProducts);
+        } catch (e) { console.error("Ошибка загрузки товаров"); }
+
+        // Секретный вход в админку
+        const title = document.getElementById('main-title');
+        let clicks = 0;
+        title.addEventListener('click', () => {
+            clicks++;
+            if (clicks === 5) window.location.href = 'admin.html';
+            setTimeout(() => clicks = 0, 3000);
+        });
+    });
+
+    // Отрисовка витрины
+    function render(items) {
+        const container = document.getElementById('container');
+        if (!container) return;
+
+        container.innerHTML = items.map(p => {
+            const qty = cart[p.id] || 0;
+            return `
+            <div class="product-card">
+                <img src="${p.image || 'https://via.placeholder.com/150'}"
+                     onclick="showDesc('${p.name}', '${p.description || ''}')"
+                     style="cursor:pointer" alt="">
+
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px;">
+                    <h3>${p.name}</h3>
+                    <button class="info-btn" onclick="showDesc('${p.name}', '${p.description || ''}')">ⓘ</button>
+                </div>
+
+                <div class="card-footer">
+                    <div class="price">${p.price} грн</div>
+                    ${qty > 0 ? `
+                        <div class="counter">
+                            <button onclick="changeQty(${p.id}, -1)">-</button>
+                            <span>${qty}</span>
+                            <button onclick="changeQty(${p.id}, 1)">+</button>
+                        </div>
+                    ` : `
+                        <button class="add-btn" onclick="changeQty(${p.id}, 1)">+</button>
+                    `}
+                </div>
+            </div>`;
+        }).join('');
+        updateOrderBar();
+    }
+
+    function changeQty(id, delta) {
+        cart[id] = (cart[id] || 0) + delta;
+        if (cart[id] <= 0) delete cart[id];
+        render(allProducts);
+    }
+
+    function updateOrderBar() {
+        let total = 0;
+        Object.keys(cart).forEach(id => {
+            const p = allProducts.find(item => item.id == id);
+            if (p) total += p.price * cart[id];
+        });
+        const bar = document.getElementById('order-bar');
+        if (total > 0) {
+            bar.style.display = 'block';
+            document.getElementById('total-price').innerText = total;
+        } else {
+            bar.style.display = 'none';
+        }
+    }
+
+    function filterItems(cat, btn) {
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (cat === 'all') render(allProducts);
+        else render(allProducts.filter(p => p.category === cat));
+    }
+
+    // Модальное окно
+    function showDesc(name, desc) {
+        document.getElementById('modal-title').innerText = name;
+        document.getElementById('modal-text').innerText = desc || "Вкуснейшее блюдо по нашему фирменному рецепту!";
+        document.getElementById('desc-modal').style.display = 'flex';
+    }
+
+    function closeDesc() {
+        document.getElementById('desc-modal').style.display = 'none';
+    }
+
+    // ОТПРАВКА ЗАКАЗА НА СЕРВЕР RENDER
+    async function sendOrder() {
+        let message = "🛍 *Новий заказ!*\n\n";
+        let total = 0;
+
+        Object.keys(cart).forEach(id => {
+            const p = allProducts.find(item => item.id == id);
+            if (p) {
+                const sum = p.price * cart[id];
+                message += `🔹 *${p.name}* x ${cart[id]} = ${sum} грн\n`;
+                total += sum;
+            }
         });
 
-        function render(items) {
-            const container = document.getElementById('container');
-            container.innerHTML = items.map(p => {
-                const qty = cart[p.id] || 0;
-                return `
-                <div class="product-card">
-                    <img src="${p.image || 'https://via.placeholder.com/150'}" alt="">
-                    <h3>${p.name}</h3>
-                    <div class="card-footer">
-                        <div class="price">${p.price} грн</div>
-                        ${qty > 0 ? `
-                            <div class="counter">
-                                <button onclick="changeQty(${p.id}, -1)">-</button>
-                                <span>${qty}</span>
-                                <button onclick="changeQty(${p.id}, 1)">+</button>
-                            </div>
-                        ` : `
-                            <button class="add-btn" onclick="changeQty(${p.id}, 1)">+</button>
-                        `}
-                    </div>
-                </div>`;
-            }).join('');
-            updateOrderBar();
-        }
+        message += `\n💰 *Итого: ${total} грн*`;
 
-        function changeQty(id, delta) {
-            cart[id] = (cart[id] || 0) + delta;
-            if (cart[id] <= 0) delete cart[id];
-            render(allProducts);
-        }
-
-        function updateOrderBar() {
-            let total = 0;
-            Object.keys(cart).forEach(id => {
-                const p = allProducts.find(item => item.id == id);
-                if (p) total += p.price * cart[id];
+        try {
+            const response = await fetch(RENDER_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    order: message,
+                    chat_id: TARGET_CHAT_ID
+                })
             });
-            const bar = document.getElementById('order-bar');
-            if (total > 0) {
-                bar.style.display = 'block';
-                document.getElementById('total-price').innerText = total;
+
+            if (response.ok) {
+                alert("✅ Заказ отправлен!");
+                cart = {};
+                render(allProducts);
             } else {
-                bar.style.display = 'none';
+                alert("Ошибка при отправке заказа.");
             }
+        } catch (e) {
+            console.error("Ошибка:", e);
+            alert("Сервер не отвечает.");
         }
-
-        function filterItems(cat, btn) {
-            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            if (cat === 'all') render(allProducts);
-            else render(allProducts.filter(p => p.category === cat));
-        }
-
-        //Исправленная функция render (полная версия)
-        // Отрисовка витрины
-function render(items) {
-    const container = document.getElementById('container');
-    if (!container) return; // Педантичная проверка на наличие контейнера
-
-    container.innerHTML = items.map(p => {
-        const qty = cart[p.id] || 0; // Проверяем, сколько этого товара в корзине
-
-        return `
-        <div class="product-card">
-            <img src="${p.image || 'https://via.placeholder.com/150'}"
-                 onclick="showDesc('${p.name}', '${p.description || ''}')"
-                 style="cursor:pointer" alt="">
-
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-                <h3>${p.name}</h3>
-                <button class="info-btn" onclick="showDesc('${p.name}', '${p.description || ''}')" title="Подробнее">ⓘ</button>
-            </div>
-
-            <div class="card-footer">
-                <div class="price">${p.price} грн</div>
-
-                ${qty > 0 ? `
-                    <div class="counter">
-                        <button onclick="changeQty(${p.id}, -1)">-</button>
-                        <span>${qty}</span>
-                        <button onclick="changeQty(${p.id}, 1)">+</button>
-                    </div>
-                ` : `
-                    <button class="add-btn" onclick="changeQty(${p.id}, 1)">+</button>
-                `}
-            </div>
-        </div>`;
-    }).join('');
-
-    updateOrderBar(); // Обновляем синюю панель внизу
-}
-
-//  эти две функции ниже (они управляют окном)
-// Функция открытия модального окна
-function showDesc(name, desc) {
-    document.getElementById('modal-title').innerText = name;
-    document.getElementById('modal-text').innerText = desc || "Вкуснейшее блюдо по нашему фирменному рецепту!";
-    document.getElementById('desc-modal').style.display = 'flex';
-}
-
-// Функция закрытия
-function closeDesc() {
-    document.getElementById('desc-modal').style.display = 'none';
-}
-    </script>
+    }
+</script>
 </body>
 </html>
