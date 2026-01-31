@@ -2,214 +2,80 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TG Shop</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        :root {
-            --main-blue: #0088cc;
-            --bg-color: #f2f2f7;
-            --white: #ffffff;
-        }
-
-        body {
-            font-family: -apple-system, system-ui, sans-serif;
-            background-color: var(--bg-color);
-            margin: 0; padding: 0;
-            padding-bottom: 120px;
-        }
-
-        /* ШАПКА */
-        .header {
-            background: var(--white);
-            padding: 20px 15px;
-            text-align: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .header h1 { margin: 0; font-size: 20px; color: #000; }
-        .header p { margin: 5px 0 0; font-size: 14px; color: #8e8e93; }
-
-        /* КАТЕГОРИИ */
-        .nav-scroll {
-            position: sticky; top: 0;
-            background: var(--white);
-            padding: 10px 0; z-index: 100;
-            border-bottom: 1px solid #eee;
-        }
-        .categories { display: flex; overflow-x: auto; padding: 0 10px; gap: 8px; }
-        .categories::-webkit-scrollbar { display: none; }
-        .cat-btn {
-            background: #f0f0f5; border: none; padding: 8px 16px;
-            border-radius: 20px; white-space: nowrap; font-weight: 600; font-size: 13px;
-        }
-        .cat-btn.active { background: var(--main-blue); color: white; }
-
-        /* СЕТКА ТОВАРОВ */
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
-        .card {
-            background: var(--white); border-radius: 15px; padding: 10px;
-            display: flex; flex-direction: column; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .card img { width: 100%; height: 110px; object-fit: cover; border-radius: 10px; }
-        .card h3 { font-size: 14px; margin: 8px 0; height: 34px; overflow: hidden; }
-
-        .price-row { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
-        .price { font-weight: 700; font-size: 15px; }
-
-        /* КНОПКИ-КРУЖОЧКИ (СЧЕТЧИК) */
-        .counter {
-            display: flex; align-items: center;
-            background: var(--main-blue); border-radius: 20px; color: white;
-        }
-        .counter button {
-            background: none; border: none; color: white;
-            width: 30px; height: 30px; font-size: 18px; font-weight: bold; cursor: pointer;
-        }
-        .counter span { min-width: 20px; text-align: center; font-size: 14px; }
-
-        .add-btn {
-            background: var(--main-blue); color: white; border: none;
-            width: 30px; height: 30px; border-radius: 50%; font-size: 20px; cursor: pointer;
-        }
-
-        /* ФУТЕР (КОНТАКТЫ) */
-        .footer {
-            margin-top: 30px; padding: 20px; text-align: center;
-            background: var(--white); color: #8e8e93; font-size: 13px;
-        }
-
-        /* ГЛАВНАЯ КНОПКА ЗАКАЗА */
-        .order-btn {
-            position: fixed; bottom: 20px; left: 15px; right: 15px;
-            background: var(--main-blue); color: white; border: none;
-            padding: 16px; border-radius: 15px; font-weight: bold;
-            font-size: 16px; display: none; z-index: 1000;
-        }
-    </style>
-</head>
+    <title>Vic Odessa Shop</title>
+    <link rel="stylesheet" href="style.css"> </head>
 <body>
 
-<div class="header">
-    <h1>Мой Магазин</h1>
-    <p>Свежие продукты с доставкой</p>
+<h1 id="main-title" style="cursor: pointer; user-select: none;">VIC ODESSA SHOP</h1>
+
+<div id="products-container" class="products-grid">
 </div>
-
-<div class="nav-scroll">
-    <div class="categories" id="cat-list">
-        <button class="cat-btn active" onclick="setCategory('Все')">Все</button>
-    </div>
-</div>
-
-<div class="grid" id="grid"></div>
-
-<div class="footer">
-    <p>📍 Наш адрес: ул. Тестовая, 10</p>
-    <p>📞 Тел: +7 (999) 123-45-67</p>
-</div>
-
-<button class="order-btn" id="order-btn" onclick="sendToBot()">Оформить заказ</button>
 
 <script>
-let clickCount = 0;
-let clickTimer;
+        // Конфигурация: путь к твоей базе данных
+        const DATA_URL = 'products.json';
 
-// Предположим, у тебя есть заголовок <h1 id="main-title">
-document.getElementById('main-title').addEventListener('click', () => {
-    clickCount++;
-    clearTimeout(clickTimer);
+        // Ждем полной загрузки HTML-структуры страницы
+        document.addEventListener('DOMContentLoaded', () => {
 
-    if (clickCount === 5) {
-        window.location.href = 'admin.html'; // Путь к админке
-    }
+            // --- 1. ЛОГИКА ВЫВОДА ТОВАРОВ ---
+            const container = document.getElementById('products-container');
 
-    clickTimer = setTimeout(() => { clickCount = 0; }, 3000);
-});
+            async function loadProducts() {
+                try {
+                    const response = await fetch(DATA_URL);
+                    if (!response.ok) throw new Error('Ошибка загрузки JSON');
 
+                    const products = await response.json();
+                    renderCards(products);
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                    if (container) container.innerHTML = '<p>Не удалось загрузить товары.</p>';
+                }
+            }
 
-    const tg = window.Telegram.WebApp;
-    tg.expand();
+            // Функция отрисовки карточек
+            function renderCards(items) {
+                if (!container) return;
 
-    let cart = {};
-    let productsData = [];
-    let currentCategory = "Все";
-
-    async function init() {
-        try {
-            const res = await fetch('products.json');
-            productsData = await res.json();
-
-            // Генерация категорий
-            const cats = ["Все", ...new Set(productsData.map(p => p.category).filter(Boolean))];
-            document.getElementById('cat-list').innerHTML = cats.map(c =>
-                `<button class="cat-btn ${c === currentCategory ? 'active' : ''}" onclick="setCategory('${c}')">${c}</button>`
-            ).join('');
-
-            render();
-        } catch (e) { console.error("Ошибка:", e); }
-    }
-
-    function setCategory(cat) {
-        currentCategory = cat;
-        document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.toggle('active', btn.innerText === cat));
-        render();
-    }
-
-    function render() {
-        const grid = document.getElementById('grid');
-        const filtered = currentCategory === "Все" ? productsData : productsData.filter(p => p.category === currentCategory);
-
-        grid.innerHTML = filtered.map(p => {
-            const count = cart[p.id] || 0;
-            return `
-                <div class="card">
-                    <img src="${p.image}" alt="">
-                    <h3>${p.name}</h3>
-                    <div class="price-row">
-                        <div class="price">${p.price} ₽</div>
-                        ${count > 0 ? `
-                            <div class="counter">
-                                <button onclick="changeQty(${p.id}, -1)">-</button>
-                                <span>${count}</span>
-                                <button onclick="changeQty(${p.id}, 1)">+</button>
-                            </div>
-                        ` : `
-                            <button class="add-btn" onclick="changeQty(${p.id}, 1)">+</button>
-                        `}
+                container.innerHTML = items.map(product => `
+                    <div class="product-card">
+                        <img src="${product.image}" alt="${product.name}">
+                        <h3>${product.name}</h3>
+                        <p>Цена: ${product.price} грн</p>
+                        <button onclick="addToCart(${product.id})">Купить</button>
                     </div>
-                </div>
-            `;
-        }).join('');
-    }
+                `).join('');
+            }
 
-    function changeQty(id, delta) {
-        cart[id] = (cart[id] || 0) + delta;
-        if (cart[id] <= 0) delete cart[id];
+            // --- 2. СЕКРЕТНЫЙ ВХОД В АДМИНКУ ---
+            const title = document.getElementById('main-title');
+            let clicks = 0;
+            let timer;
 
-        const btn = document.getElementById('order-btn');
-        let total = 0;
-        Object.keys(cart).forEach(cid => {
-            const p = productsData.find(prod => prod.id == cid);
-            total += p.price * cart[cid];
+            if (title) {
+                title.addEventListener('click', () => {
+                    clicks++;
+                    clearTimeout(timer);
+
+                    // Если сделано 5 кликов за 3 секунды
+                    if (clicks === 5) {
+                        window.location.href = 'admin.html';
+                    }
+
+                    // Сброс счетчика через 3 секунды затишья
+                    timer = setTimeout(() => { clicks = 0; }, 3000);
+                });
+            }
+
+            // Запускаем загрузку товаров
+            loadProducts();
         });
 
-        btn.style.display = total > 0 ? 'block' : 'none';
-        btn.innerText = `Заказать (${total} ₽)`;
-
-        render();
-        tg.HapticFeedback.impactOccurred('light');
-    }
-
-    function sendToBot() {
-        let order = { items: [], total_price: 0 };
-        Object.keys(cart).forEach(id => {
-            const p = productsData.find(prod => prod.id == id);
-            order.items.push(`${p.name} x${cart[id]}`);
-            order.total_price += p.price * cart[id];
-        });
-        tg.sendData(JSON.stringify(order));
-    }
-
-    init();
-</script>
+        // Функция для кнопки "Купить" (вынесена из DOMContentLoaded для доступа из HTML)
+        function addToCart(productId) {
+            alert('Товар ' + productId + ' добавлен в корзину (функционал в разработке)');
+        }
+    </script>
 </body>
 </html>
