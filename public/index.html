@@ -117,6 +117,21 @@
             border-radius: 14px; display: none; text-align: center;
             font-weight: bold; cursor: pointer; z-index: 1000;
         }
+
+        /* Модальное окно для описания */
+.modal {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000;
+}
+.modal-content {
+    background: white; padding: 20px; border-radius: 20px; width: 80%; max-width: 400px;
+    text-align: left; position: relative;
+}
+.close-modal { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; }
+.info-btn {
+    background: #eee; border: none; width: 24px; height: 24px;
+    border-radius: 50%; font-size: 14px; cursor: pointer; margin-left: 5px;
+}
     </style>
 </head>
 <body>
@@ -135,6 +150,14 @@
 
 <div id="order-bar" onclick="sendOrder()">
     Заказать: <span id="total-price">0</span> грн
+</div>
+
+<div id="desc-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeDesc()">&times;</span>
+        <h3 id="modal-title"></h3>
+        <p id="modal-text"></p>
+    </div>
 </div>
 
 <script>
@@ -212,9 +235,57 @@
             else render(allProducts.filter(p => p.category === cat));
         }
 
-        function sendOrder() {
-            alert("Заказ на сумму " + document.getElementById('total-price').innerText + " грн принят!");
-        }
+        //Исправленная функция render (полная версия)
+        // Отрисовка витрины
+function render(items) {
+    const container = document.getElementById('container');
+    if (!container) return; // Педантичная проверка на наличие контейнера
+
+    container.innerHTML = items.map(p => {
+        const qty = cart[p.id] || 0; // Проверяем, сколько этого товара в корзине
+
+        return `
+        <div class="product-card">
+            <img src="${p.image || 'https://via.placeholder.com/150'}"
+                 onclick="showDesc('${p.name}', '${p.description || ''}')"
+                 style="cursor:pointer" alt="">
+
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <h3>${p.name}</h3>
+                <button class="info-btn" onclick="showDesc('${p.name}', '${p.description || ''}')" title="Подробнее">ⓘ</button>
+            </div>
+
+            <div class="card-footer">
+                <div class="price">${p.price} грн</div>
+
+                ${qty > 0 ? `
+                    <div class="counter">
+                        <button onclick="changeQty(${p.id}, -1)">-</button>
+                        <span>${qty}</span>
+                        <button onclick="changeQty(${p.id}, 1)">+</button>
+                    </div>
+                ` : `
+                    <button class="add-btn" onclick="changeQty(${p.id}, 1)">+</button>
+                `}
+            </div>
+        </div>`;
+    }).join('');
+
+    updateOrderBar(); // Обновляем синюю панель внизу
+}
+
+//  эти две функции ниже (они управляют окном)
+// Функция открытия модального окна
+function showDesc(name, desc) {
+    document.getElementById('modal-title').innerText = name;
+    document.getElementById('modal-text').innerText = desc || "Вкуснейшее блюдо по нашему фирменному рецепту!";
+    document.getElementById('desc-modal').style.display = 'flex';
+}
+
+// Функция закрытия
+function closeDesc() {
+    document.getElementById('desc-modal').style.display = 'none';
+}
     </script>
 </body>
 </html>
