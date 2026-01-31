@@ -110,6 +110,22 @@
 <button class="order-btn" id="order-btn" onclick="sendToBot()">Оформить заказ</button>
 
 <script>
+let clickCount = 0;
+let clickTimer;
+
+// Предположим, у тебя есть заголовок <h1 id="main-title">
+document.getElementById('main-title').addEventListener('click', () => {
+    clickCount++;
+    clearTimeout(clickTimer);
+
+    if (clickCount === 5) {
+        window.location.href = 'admin.html'; // Путь к админке
+    }
+
+    clickTimer = setTimeout(() => { clickCount = 0; }, 3000);
+});
+
+
     const tg = window.Telegram.WebApp;
     tg.expand();
 

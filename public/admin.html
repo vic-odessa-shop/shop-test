@@ -2,88 +2,161 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Панель управления Shop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Manager Pro</title>
     <style>
-        body { font-family: sans-serif; padding: 30px; background: #f0f2f5; }
-        .card { max-width: 400px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #0088cc; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        #log { margin-top: 15px; font-size: 13px; color: #555; white-space: pre-wrap; }
+        :root { --primary: #0088cc; --danger: #e74c3c; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 12px; shadow: 0 5px 15px rgba(0,0,0,0.08); }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .tab-btn { padding: 10px 20px; border: none; background: none; cursor: pointer; font-weight: bold; color: #666; }
+        .tab-btn.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: #f8f9fa; padding: 12px; text-align: left; cursor: pointer; border-bottom: 2px solid #dee2e6; }
+        th:hover { background: #e9ecef; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+
+        .form-group { margin-bottom: 15px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        button.main-btn { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; width: 100%; }
+        .btn-del { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+
+        #log { margin-top: 20px; padding: 10px; border-radius: 6px; display: none; }
+        .error { background: #f8d7da; color: #721c24; display: block !important; }
+        .success { background: #d4edda; color: #155724; display: block !important; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>Новый товар</h2>
-    <input type="password" id="token" placeholder="Ваш GitHub Токен (ghp_...)">
-    <hr>
-    <input type="text" id="name" placeholder="Название (например, Пицца)">
-    <input type="number" id="price" placeholder="Цена">
-    <input type="text" id="cat" placeholder="Категория">
-    <input type="text" id="img" placeholder="Ссылка на фото">
-    <button onclick="send()">Добавить в магазин</button>
+<div class="container">
+    <div class="form-group">
+        <input type="password" id="gh-token" placeholder="GitHub Token (ghp_...)" onchange="saveToken(this.value)">
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('list')">📦 Список товаров</button>
+        <button class="tab-btn" onclick="switchTab('add')">➕ Добавить товар</button>
+    </div>
+
     <div id="log"></div>
+
+    <div id="tab-list">
+        <table id="productsTable">
+            <thead>
+            <tr>
+                <th onclick="sortTable('name')">Товар ↕</th>
+                <th onclick="sortTable('category')">Категория ↕</th>
+                <th onclick="sortTable('price')">Цена ↕</th>
+                <th>Действие</th>
+            </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <div id="tab-add" style="display:none;">
+        <div class="form-group"><input type="text" id="p-name" placeholder="Название"></div>
+        <div class="form-group"><input type="number" id="p-price" placeholder="Цена"></div>
+        <div class="form-group"><input type="text" id="p-cat" placeholder="Категория"></div>
+        <div class="form-group"><input type="text" id="p-img" placeholder="URL картинки"></div>
+        <button class="main-btn" onclick="addProduct()">Сохранить на GitHub</button>
+    </div>
 </div>
 
 <script>
 const REPO = 'vic-odessa-shop/shop-test';
-const FILE = 'public/products.json'; // Добавляем public/ в начало
+const FILE = 'public/products.json';
+let allProducts = [];
+let currentSHA = '';
 
-async function send() {
-    const log = document.getElementById('log');
-    const token = document.getElementById('token').value;
-    log.innerText = "⏳ Связываюсь с GitHub...";
+// Инициализация
+document.getElementById('gh-token').value = localStorage.getItem('gh_token') || '';
+if(document.getElementById('gh-token').value) loadData();
+
+function saveToken(val) { localStorage.setItem('gh_token', val); loadData(); }
+
+function switchTab(tab) {
+    document.getElementById('tab-list').style.display = tab === 'list' ? 'block' : 'none';
+    document.getElementById('tab-add').style.display = tab === 'add' ? 'block' : 'none';
+    document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', (tab==='list' && i===0) || (tab==='add' && i===1)));
+    if(tab === 'list') loadData();
+}
+
+async function loadData() {
+    const token = document.getElementById('gh-token').value;
+    if(!token) return showLog("Введите токен!", "error");
 
     try {
-        // 1. Получаем текущий файл и его SHA
-        const getUrl = `https://api.github.com/repos/${REPO}/contents/${FILE}`;
-        const res = await fetch(getUrl, {
+        const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE}`, {
             headers: { 'Authorization': `token ${token}` }
         });
-
-        if (!res.ok) throw new Error("Не нашел файл или токен неверный");
         const data = await res.json();
-
-        // Декодируем текущие товары
+        currentSHA = data.sha;
         const content = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
-        let products = JSON.parse(content);
+        allProducts = JSON.parse(content);
+        renderTable(allProducts);
+    } catch (e) { showLog("Ошибка загрузки: " + e.message, "error"); }
+}
 
-        // 2. Добавляем новый товар
-        const newItem = {
-            id: Date.now(),
-            name: document.getElementById('name').value,
-            price: parseInt(document.getElementById('price').value),
-            category: document.getElementById('cat').value,
-            image: document.getElementById('img').value || "https://loremflickr.com/300/300/food"
-        };
-        products.push(newItem);
+function renderTable(products) {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = products.map((p, idx) => `
+        <tr>
+            <td>${p.name}</td>
+            <td>${p.category}</td>
+            <td>${p.price}</td>
+            <td><button class="btn-del" onclick="deleteItem(${idx})">Удалить</button></td>
+        </tr>
+    `).join('');
+}
 
-        // 3. Сохраняем обратно
-        const updatedB64 = btoa(unescape(encodeURIComponent(JSON.stringify(products, null, 2))));
+function sortTable(key) {
+    const sorted = [...allProducts].sort((a, b) => a[key] > b[key] ? 1 : -1);
+    renderTable(sorted);
+}
 
-        const putRes = await fetch(getUrl, {
+async function addProduct() {
+    const newP = {
+        id: Date.now(),
+        name: document.getElementById('p-name').value,
+        price: parseInt(document.getElementById('p-price').value),
+        category: document.getElementById('p-cat').value,
+        image: document.getElementById('p-img').value || "https://loremflickr.com/300/300/food"
+    };
+    allProducts.push(newP);
+    await syncWithGitHub("Добавлен товар: " + newP.name);
+}
+
+async function deleteItem(index) {
+    if(!confirm("Удалить этот товар?")) return;
+    allProducts.splice(index, 1);
+    await syncWithGitHub("Удален товар");
+}
+
+async function syncWithGitHub(msg) {
+    const token = document.getElementById('gh-token').value;
+    const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(allProducts, null, 2))));
+
+    try {
+        const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE}`, {
             method: 'PUT',
-            headers: {
-                'Authorization': `token ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                message: "Добавлен товар через админку",
-                content: updatedB64,
-                sha: data.sha
-            })
+            headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: msg, content: b64, sha: currentSHA })
         });
-
-        if (putRes.ok) {
-            log.innerText = "✅ Успешно! Товар добавлен. Обновите магазин через минуту.";
-        } else {
-            const err = await putRes.json();
-            throw new Error(err.message);
+        if(res.ok) {
+            showLog("✅ Гитхаб обновлен!", "success");
+            loadData();
+            if(document.getElementById('tab-add').style.display === 'block') switchTab('list');
         }
+    } catch (e) { showLog("Ошибка синхронизации", "error"); }
+}
 
-    } catch (e) {
-        log.innerText = "❌ Ошибка: " + e.message;
-    }
+function showLog(text, type) {
+    const l = document.getElementById('log');
+    l.innerText = text;
+    l.className = type;
+    setTimeout(() => l.className = '', 3000);
 }
 </script>
 </body>
