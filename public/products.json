@@ -36,15 +36,8 @@
   },
   {
     "id": 1769869577988,
-    "name": "тест",
+    "name": "тестик",
     "price": 777,
-    "category": "Пицца",
-    "image": "https://loremflickr.com/300/300/food?random=5"
-  },
-  {
-    "id": 1769869724920,
-    "name": "тест2",
-    "price": 888,
     "category": "Пицца",
     "image": "https://loremflickr.com/300/300/food?random=5"
   },
@@ -54,5 +47,12 @@
     "price": 110,
     "category": "Пицца",
     "image": "http://"
+  },
+  {
+    "id": 1769873439165,
+    "name": "Пицца так себе мне",
+    "price": 73,
+    "category": "Пицца",
+    "image": "https://loremflickr.com/300/300/food?random=9"
   }
 ]
