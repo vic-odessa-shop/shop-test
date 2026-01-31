@@ -142,8 +142,15 @@
 
 <main class="products-grid" id="container"></main>
 
+
+<div id="customer-info" style="background: white; padding: 15px; margin: 10px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.03);">
+    <h4 style="margin-top: 0;">Контактные данные:</h4>
+    <input type="text" id="cust-name" placeholder="Ваше имя" style="width: 90%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px;">
+    <input type="tel" id="cust-phone" placeholder="Номер телефона" style="width: 90%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+</div>
+
 <div id="order-bar" onclick="sendOrder()">
-    Заказать: <span id="total-price">0</span> грн
+     Заказать: <span id="total-price">0</span> грн
 </div>
 
 <div id="desc-modal" class="modal">
@@ -155,6 +162,15 @@
 </div>
 
 <script>
+//  получить Telegram ID автоматически
+const tg = window.Telegram.WebApp;
+const userNickname = tg.initDataUnsafe?.user?.username || "нет никнейма";
+const userId = tg.initDataUnsafe?.user?.id || "неизвестно";
+
+// И в текст сообщения в sendOrder добавь:
+message += `🆔 *TG ID:* ${userId} (@${userNickname})\n`;
+
+
     const DATA_URL = 'products.json';
     // --- ПЕДАНТИЧНАЯ НАСТРОЙКА ---
     const RENDER_API_URL = 'https://shop-test-zcei.onrender.com/api/send-order'; // Вставь свой URL
@@ -255,43 +271,62 @@
     }
 
     // ОТПРАВКА ЗАКАЗА НА СЕРВЕР RENDER
-    async function sendOrder() {
-        let message = "🛍 *Новий заказ!*\n\n";
-        let total = 0;
+// Теперь нам нужно заставить функцию проверять эти поля
+// и добавлять их в текст сообщения.
 
+async function sendOrder() {
+// 1. Берем данные из полей
+    const name = document.getElementById('cust-name').value;
+    const phone = document.getElementById('cust-phone').value;
+
+// 2. Проверяем, заполнил ли их клиент
+    if (!name || !phone) {
+        alert("Пожалуйста, введите имя и номер телефона!");
+        return;
+    }
+
+// 3. Собираем текст заказа
+        let message = `👤 *Новое замовлення!*\n`;
+        message += `━━━━━━━━━━━━━━━━━━\n`;
+        message += `👤 *Клиент:* ${name}\n`;
+        message += `📞 *Телефон:* ${phone}\n`;
+        message += `━━━━━━━━━━━━━━━━━━\n\n`;
+
+        let total = 0;
         Object.keys(cart).forEach(id => {
-            const p = allProducts.find(item => item.id == id);
-            if (p) {
-                const sum = p.price * cart[id];
-                message += `🔹 *${p.name}* x ${cart[id]} = ${sum} грн\n`;
-                total += sum;
-            }
+        const p = allProducts.find(item => item.id == id);
+        if (p) {
+            const sum = p.price * cart[id];
+            message += `🔹 *${p.name}* x ${cart[id]} = ${sum} грн\n`;
+            total += sum;
+        }
         });
 
-        message += `\n💰 *Итого: ${total} грн*`;
+        message += `\n━━━━━━━━━━━━━━━━━━\n`;
+        message += `💰 *ИТОГО: ${total} грн*`;
 
+// 4. Отправляем (адрес тот же)
         try {
             const response = await fetch(RENDER_API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    order: message,
-                    chat_id: TARGET_CHAT_ID
-                })
-            });
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+            order: message,
+            chat_id: TARGET_CHAT_ID
+        }           )
+    });
 
-            if (response.ok) {
-                alert("✅ Заказ отправлен!");
-                cart = {};
-                render(allProducts);
-            } else {
-                alert("Ошибка при отправке заказа.");
-            }
-        } catch (e) {
-            console.error("Ошибка:", e);
-            alert("Сервер не отвечает.");
-        }
-    }
+if (response.ok) {
+alert("✅ Заказ принят, " + name + "! Мы вам перезвоним.");
+cart = {};
+document.getElementById('cust-name').value = '';
+document.getElementById('cust-phone').value = '';
+render(allProducts);
+}
+} catch (e) {
+alert("Ошибка связи.");
+}
+}
 </script>
 </body>
 </html>
