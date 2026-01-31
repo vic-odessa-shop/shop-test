@@ -47,5 +47,12 @@
     "price": 888,
     "category": "Пицца",
     "image": "https://loremflickr.com/300/300/food?random=5"
+  },
+  {
+    "id": 1769871570606,
+    "name": "Пицца так себе",
+    "price": 110,
+    "category": "Пицца",
+    "image": "http://"
   }
 ]
