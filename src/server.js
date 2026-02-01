@@ -1,64 +1,106 @@
-require('dotenv').config();
+require('dotenv').config(); // Загружает данные из .env
 const express = require('express');
-const cors = require('cors'); // Подключаем библиотеку
+const { Telegraf } = require('telegraf');
+const axios = require('axios');
 const path = require('path');
-const { Telegraf, Markup } = require('telegraf');
-const db = require('./db');
-const { createPaymentLink } = require('./payments');
+const cors = require('cors');
+
+// --- ДАННЫЕ ИЗ ОКРУЖЕНИЯ ---
+const BOT_TOKEN = process.env.BOT_TOKEN;
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const GITHUB_REPO = process.env.GITHUB_REPO;
+const TARGET_CHAT_ID = process.env.TARGET_CHAT_ID;
+
+// Пути к файлам (учитываем, что server.js в /src, а файлы в /public)
+const PRODUCTS_PATH = 'public/products.json';
+const ORDERS_PATH = 'public/orders.json';
 
 const app = express();
-const bot = new Telegraf(process.env.BOT_TOKEN);
+const bot = new Telegraf(BOT_TOKEN);
 
-// --- НАСТРОЙКИ СЕРВЕРА (Middleware) ---
-// ВНИМАНИЕ: CORS должен быть ВЫШЕ всех остальных настроек
-app.use(cors({
-    origin: '*', // Разрешает запросы с любого адреса (включая твой GitHub)
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type']
-}));
-
+app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
-// --- API МАРШРУТ ДЛЯ ЗАКАЗОВ ---
-app.post('/api/send-order', async (req, res) => {
-    try {
-        const { order, chat_id } = req.body;
-        console.log(`[API] Получен новый заказ для CHAT_ID: ${chat_id}`);
-
-        await bot.telegram.sendMessage(chat_id, order, { parse_mode: 'HTML' });
-
-        res.status(200).json({ success: true, message: "Order sent to Telegram" });
-    } catch (e) {
-        console.error("[API ERROR] Ошибка при отправке заказа:", e);
-        res.status(500).json({ success: false, error: e.message });
-    }
+// Доступ к админке
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/admin.html'));
 });
 
-// Команда /start
-bot.start(async (ctx) => {
+// ФУНКЦИЯ ОБНОВЛЕНИЯ ГИТХАБА
+async function updateGitHubStorage(cart, orderInfo) {
     try {
-        await db.upsertUser(ctx.from.id, ctx.from.username, ctx.from.first_name);
-        ctx.reply(`Вітаю, ${ctx.from.first_name}! 🍕 Обирайте найкраще в нашому магазині:`,
-            Markup.keyboard([
-                [Markup.button.webApp('Відкрити Магазин', process.env.WEB_APP_URL)]
-            ]).resize()
-        );
+        const headers = {
+            Authorization: `token ${GITHUB_TOKEN}`,
+            Accept: 'application/vnd.github.v3+json'
+        };
+
+        // 1. ОБНОВЛЯЕМ СКЛАД (products.json)
+        const prodRes = await axios.get(`https://api.github.com/repos/${GITHUB_REPO}/contents/${PRODUCTS_PATH}`, { headers });
+        let products = JSON.parse(Buffer.from(prodRes.data.content, 'base64').toString());
+
+        Object.keys(cart).forEach(id => {
+            const p = products.find(item => item.id == id);
+            if (p && p.stock !== undefined && p.stock !== null) {
+                p.stock -= cart[id];
+                if (p.stock < 0) p.stock = 0;
+            }
+        });
+
+        await axios.put(`https://api.github.com/repos/${GITHUB_REPO}/contents/${PRODUCTS_PATH}`, {
+            message: "🛒 Списання залишків (авто)",
+            content: Buffer.from(JSON.stringify(products, null, 2)).toString('base64'),
+            sha: prodRes.data.sha
+        }, { headers });
+
+        // 2. ЗАПИСЫВАЕМ ЗАКАЗ (orders.json)
+        const ordRes = await axios.get(`https://api.github.com/repos/${GITHUB_REPO}/contents/${ORDERS_PATH}`, { headers }).catch(() => null);
+        let orders = [];
+        let ordSha = null;
+
+        if (ordRes) {
+            orders = JSON.parse(Buffer.from(ordRes.data.content, 'base64').toString());
+            ordSha = ordRes.data.sha;
+        }
+
+        orders.push({
+            id: Date.now(),
+            date: new Date().toLocaleString('uk-UA'),
+            details: orderInfo,
+            status: 'Новий'
+        });
+
+        await axios.put(`https://api.github.com/repos/${GITHUB_REPO}/contents/${ORDERS_PATH}`, {
+            message: "📝 Нове замовлення в базу",
+            content: Buffer.from(JSON.stringify(orders, null, 2)).toString('base64'),
+            sha: ordSha
+        }, { headers });
+
+        console.log('✅ Склад та історія замовлень оновлені на GitHub');
     } catch (e) {
-        console.error("Помилка в команді start:", e);
+        console.error('❌ Помилка синхронізації з GitHub:', e.response?.data?.message || e.message);
+    }
+}
+
+// ПРИЕМ ЗАКАЗА
+app.post('/api/send-order', async (req, res) => {
+    const { order, chat_id, cart } = req.body;
+
+    try {
+        // Отправка в ТГ
+        await bot.telegram.sendMessage(chat_id || TARGET_CHAT_ID, order, { parse_mode: 'HTML' });
+
+        // Если пришла корзина — запускаем обновление склада
+        if (cart && Object.keys(cart).length > 0) {
+            updateGitHubStorage(cart, order);
+        }
+
+        res.status(200).send({ success: true });
+    } catch (error) {
+        console.error('Ошибка:', error.message);
+        res.status(500).send({ error: 'Помилка при відправці' });
     }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`🚀 Сервер запущен на порту ${PORT}`);
-});
-
-// Маршрут для открытия админки
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin.html'));
-});
-
-bot.launch()
-    .then(() => console.log('✅ Бот успешно запущен'))
-    .catch((err) => console.error('❌ Ошибка запуска бота:', err));
+app.listen(PORT, () => console.log(`🚀 Сервер на порту ${PORT}`));
