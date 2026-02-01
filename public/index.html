@@ -109,14 +109,17 @@
 
 <main class="products-grid" id="container"></main>
 
-<div id="customer-info">
-    <h4 style="margin: 0 0 10px 0;">Контактні дані:</h4>
-    <input type="text" id="cust-name" placeholder="Ваше ім'я">
-    <input type="tel" id="cust-phone" placeholder="Номер телефону">
-</div>
+<div id="order-container" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; z-index: 1000; display: none;">
 
-<div id="order-bar" onclick="sendOrder()">
-    <span id="order-btn-text">Замовити:</span> <span id="total-price">0</span> грн
+    <div id="customer-info" style="background: white; padding: 15px; margin-bottom: 10px; border-radius: 15px; box-shadow: 0 -5px 20px rgba(0,0,0,0.1);">
+        <h4 style="margin: 0 0 10px 0; color: #333;">Куди відправити?</h4>
+        <input type="text" id="cust-name" placeholder="Ваше ім'я" style="width: 100%; padding: 12px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box;">
+        <input type="tel" id="cust-phone" placeholder="Номер телефону" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box;">
+    </div>
+
+    <div id="order-bar" onclick="sendOrder()" style="background: var(--main-blue); color: white; padding: 16px; border-radius: 15px; text-align: center; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+        <span id="order-btn-text">Замовити:</span> <span id="total-price">0</span> грн
+    </div>
 </div>
 
 <div id="desc-modal" class="modal">
@@ -195,24 +198,20 @@
     }
 
     function updateOrderBar() {
-        let total = 0;
-        Object.keys(cart).forEach(id => {
-            const p = allProducts.find(item => item.id == id);
-            if (p) total += p.price * cart[id];
-        });
+    let total = 0;
+    Object.keys(cart).forEach(id => {
+        const p = allProducts.find(item => item.id == id);
+        if (p) total += p.price * cart[id];
+    });
 
-        const bar = document.getElementById('order-bar');
-        const info = document.getElementById('customer-info');
-
-        if (total > 0) {
-            bar.style.display = 'block';
-            info.style.display = 'block'; // Показываем поля ввода
-            document.getElementById('total-price').innerText = total;
-        } else {
-            bar.style.display = 'none';
-            info.style.display = 'none'; // Прячем поля ввода
-        }
+    const container = document.getElementById('order-container');
+    if (total > 0) {
+        container.style.display = 'block';
+        document.getElementById('total-price').innerText = total;
+    } else {
+        container.style.display = 'none';
     }
+}
 
     function filterItems(cat, btn) {
         document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
@@ -287,30 +286,25 @@ async function sendOrder() {
             return;
         }
 
-        let message = `👤 *Нове замовлення!*\n`;
-        message += `━━━━━━━━━━━━━━━━━━\n`;
-        message += `👤 *Клієнт:* ${name}\n`;
-        message += `📞 *Телефон:* ${phone}\n`;
+// Сначала объявляем пустую строку
+let message = `👤 *Нове замовлення!*\n`;
+message += `━━━━━━━━━━━━━━━━━━\n`;
+message += `👤 *Клієнт:* ${name}\n`;
+message += `📞 *Телефон:* ${phone}\n`;
+message += `━━━━━━━━━━━━━━━━━━\n\n`;
 
-        // Добавляем инфо из Telegram если есть
-        if (tg.initDataUnsafe?.user) {
-            const user = tg.initDataUnsafe.user;
-            message += `🆔 *TG ID:* ${user.id} (@${user.username || 'no_nick'})\n`;
-        }
+// Потом добавляем товары
+let total = 0;
+Object.keys(cart).forEach(id => {
+    const p = allProducts.find(item => item.id == id);
+    if (p) {
+        const sum = p.price * cart[id];
+        message += `🔹 *${p.name}* x ${cart[id]} = ${sum} грн\n`;
+        total += sum;
+    }
+});
 
-        message += `━━━━━━━━━━━━━━━━━━\n\n`;
-
-        let total = 0;
-        Object.keys(cart).forEach(id => {
-            const p = allProducts.find(item => item.id == id);
-            if (p) {
-                const sum = p.price * cart[id];
-                message += `🔹 *${p.name}* x ${cart[id]} = ${sum} грн\n`;
-                total += sum;
-            }
-        });
-
-        message += `\n━━━━━━━━━━━━━━━━━━\n💰 *РАЗОМ: ${total} грн*`;
+message += `\n━━━━━━━━━━━━━━━━━━\n💰 *РАЗОМ: ${total} грн*`;
 
         try {
             const response = await fetch(RENDER_API_URL, {
