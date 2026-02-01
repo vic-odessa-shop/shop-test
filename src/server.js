@@ -54,6 +54,11 @@ app.listen(PORT, () => {
     console.log(`🚀 Сервер запущен на порту ${PORT}`);
 });
 
+// Маршрут для открытия админки
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
 bot.launch()
     .then(() => console.log('✅ Бот успешно запущен'))
     .catch((err) => console.error('❌ Ошибка запуска бота:', err));

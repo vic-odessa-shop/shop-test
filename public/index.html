@@ -22,7 +22,15 @@
             text-align: center;
         }
 
-        #main-title { font-size: 20px; color: var(--main-blue); cursor: pointer; margin: 0; }
+        #main-title {
+            font-size: 20px;
+            color: var(--main-blue);
+            cursor: pointer;
+            margin: 0;
+            /* Защита от выделения при частых кликах */
+            user-select: none;
+            -webkit-user-select: none;
+        }
 
         .categories { display: flex; overflow-x: auto; justify-content: center; padding: 10px; gap: 8px; }
         .cat-btn { background: #ebebeb; border: none; padding: 8px 15px; border-radius: 20px; font-weight: 500; cursor: pointer; white-space: nowrap; }
@@ -308,7 +316,34 @@ message += `💰 <b>РАЗОМ: ${total} грн</b>`;
         document.getElementById('desc-modal').style.display = 'flex';
     }
 
+
+//   скрипт «Тайного входа»
     function closeDesc() { document.getElementById('desc-modal').style.display = 'none'; }
+
+let titleClicks = 0;
+let clickTimer;
+
+document.getElementById('main-title').addEventListener('click', () => {
+    titleClicks++;
+
+    // Очищаем таймер при каждом клике
+    clearTimeout(clickTimer);
+
+    // Если за 3 секунды не успел — сброс
+    clickTimer = setTimeout(() => {
+        titleClicks = 0;
+    }, 3000);
+
+    // Если 5 кликов — переход
+    if (titleClicks === 5) {
+        titleClicks = 0;
+        // Переходим в админку.
+        // Если admin.html лежит в public, а сервер настроен — просто 'admin'
+        // Если заходим как в файл — 'admin.html'
+        window.location.href = 'admin.html';
+    }
+});
+
 </script>
 </body>
 </html>
