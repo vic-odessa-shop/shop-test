@@ -26,7 +26,7 @@ app.post('/api/send-order', async (req, res) => {
         const { order, chat_id } = req.body;
         console.log(`[API] Получен новый заказ для CHAT_ID: ${chat_id}`);
 
-        await bot.telegram.sendMessage(chat_id, order, { parse_mode: 'Markdown' });
+        await bot.telegram.sendMessage(chat_id, order, { parse_mode: 'HTML' });
 
         res.status(200).json({ success: true, message: "Order sent to Telegram" });
     } catch (e) {

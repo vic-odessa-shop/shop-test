@@ -66,6 +66,22 @@
             width: 92%; max-width: 450px; z-index: 1000; display: none;
         }
 
+.info-btn {
+    background: #f0f0f0;
+    border: none;
+    color: #666;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0; /* Чтобы кнопка не сжималась, если название длинное */
+}
+
         #customer-info {
             display: none; /* Скрыто до нажатия на Замовити */
             background: white; padding: 15px; margin-bottom: 10px;
@@ -146,31 +162,35 @@
         } catch (e) { console.error("Ошибка загрузки товаров"); }
     });
 
-    function render(items) {
-        const container = document.getElementById('container');
-        container.innerHTML = items.map(p => {
-            const qty = cart[p.id] || 0;
-            return `
-            <div class="product-card">
-                <img src="${p.image || ''}" onclick="showDesc('${p.name}', '${p.description || ''}')">
-                <h3>${p.name}</h3>
-                <div class="card-footer">
-                    <div class="price">${p.price} грн</div>
-                    ${qty > 0 ? `
-                        <div class="counter">
-                            <button onclick="changeQty(${p.id}, -1)">-</button>
-                            <span>${qty}</span>
-                            <button onclick="changeQty(${p.id}, 1)">+</button>
-                        </div>
-                    ` : `
-                        <button class="add-btn" onclick="changeQty(${p.id}, 1)">+</button>
-                    `}
-                </div>
-            </div>`;
-        }).join('');
-        updateOrderBar();
-    }
+function render(items) {
+    const container = document.getElementById('container');
+    container.innerHTML = items.map(p => {
+        const qty = cart[p.id] || 0;
+        return `
+        <div class="product-card">
+            <img src="${p.image || ''}" onclick="showDesc('${p.name}', '${p.description || ''}')" alt="${p.name}">
 
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; margin: 10px 0;">
+                <h3 style="font-size:14px; margin:0; line-height:1.2; padding-right:5px;">${p.name}</h3>
+                <button class="info-btn" onclick="showDesc('${p.name}', '${p.description || ''}')">і</button>
+            </div>
+
+            <div class="card-footer">
+                <div class="price">${p.price} грн</div>
+                ${qty > 0 ? `
+                    <div class="counter">
+                        <button onclick="changeQty(${p.id}, -1)">-</button>
+                        <span>${qty}</span>
+                        <button onclick="changeQty(${p.id}, 1)">+</button>
+                    </div>
+                ` : `
+                    <button class="add-btn" onclick="changeQty(${p.id}, 1)">+</button>
+                `}
+            </div>
+        </div>`;
+    }).join('');
+    updateOrderBar();
+}
     function changeQty(id, delta) {
         cart[id] = (cart[id] || 0) + delta;
         if (cart[id] <= 0) delete cart[id];
@@ -231,24 +251,30 @@
         document.getElementById('order-btn-text').innerText = 'Надсилаємо...';
 
         // Сборка сообщения
-        let message = `👤 *Нове замовлення!*\n━━━━━━━━━━━━━━━━━━\n`;
-        message += `👤 *Клієнт:* ${name}\n`;
-        message += `📞 *Телефон:* ${phone}\n`;
-        if (tg.initDataUnsafe?.user) {
-            message += `🆔 *TG:* @${tg.initDataUnsafe.user.username || 'no_nick'}\n`;
-        }
-        message += `━━━━━━━━━━━━━━━━━━\n\n`;
+// --- СБОРКА СООБЩЕНИЯ (HTML VERSION) ---
+let message = `👤 <b>Нове замовлення!</b>\n`;
+message += `━━━━━━━━━━━━━━━━━━\n`;
+message += `👤 <b>Клієнт:</b> ${name}\n`;
+message += `📞 <b>Телефон:</b> ${phone}\n`;
 
-        let total = 0;
-        Object.keys(cart).forEach(id => {
-            const p = allProducts.find(item => item.id == id);
-            if (p) {
-                const sum = p.price * cart[id];
-                message += `🔹 *${p.name}* x ${cart[id]} = ${sum} грн\n`;
-                total += sum;
-            }
-        });
-        message += `\n━━━━━━━━━━━━━━━━━━\n💰 *РАЗОМ: ${total} грн*`;
+if (tg.initDataUnsafe?.user) {
+    const nick = tg.initDataUnsafe.user.username || 'no_nick';
+    message += `🆔 <b>TG:</b> @${nick}\n`;
+}
+message += `━━━━━━━━━━━━━━━━━━\n\n`;
+
+let total = 0;
+Object.keys(cart).forEach(id => {
+    const p = allProducts.find(item => item.id == id);
+    if (p) {
+        const sum = p.price * cart[id];
+        message += `🔹 <b>${p.name}</b> x ${cart[id]} = ${sum} грн\n`;
+        total += sum;
+    }
+});
+
+message += `\n━━━━━━━━━━━━━━━━━━\n`;
+message += `💰 <b>РАЗОМ: ${total} грн</b>`;
 
         try {
             const response = await fetch(RENDER_API_URL, {
