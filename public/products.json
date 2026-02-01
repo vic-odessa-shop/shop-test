@@ -62,5 +62,12 @@
     "category": "Пицца",
     "image": "https://loremflickr.com/300/300/food?random=9",
     "description": ""
+  },
+  {
+    "id": 1769956934686,
+    "name": "Пицца НЕ себе",
+    "price": 1000,
+    "category": "Пицца",
+    "image": "https://loremflickr.com/300/300/food?random=10"
   }
 ]
