@@ -1,98 +1,55 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Vic Odessa Shop</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root {
-            --main-blue: #0088cc;
-            --bg-color: #f2f2f7;
-            --text-dark: #333;
-        }
+        :root { --main-blue: #0088cc; --bg-color: #f2f2f7; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg-color); margin: 0; padding-bottom: 250px; }
 
-        body {
-            font-family: -apple-system, system-ui, sans-serif;
-            background: var(--bg-color);
-            margin: 0; padding-bottom: 120px;
-            color: var(--text-dark);
-        }
+        header { background: white; padding: 15px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.05); text-align: center; }
+        #main-title { font-size: 20px; color: var(--main-blue); cursor: pointer; }
 
-        header {
-            background: white; padding: 15px 0;
-            position: sticky; top: 0; z-index: 100;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            text-align: center;
-        }
-
-        #main-title {
-            font-size: 20px; margin: 0 0 15px; color: var(--main-blue);
-            cursor: pointer; user-select: none; display: inline-block;
-        }
-
-        .categories {
-            display: flex; overflow-x: auto; justify-content: center; padding: 0 10px; gap: 8px;
-        }
-        .categories::-webkit-scrollbar { display: none; }
-
-        .cat-btn {
-            background: #ebebeb; border: none; padding: 8px 15px;
-            border-radius: 20px; white-space: nowrap; font-weight: 500; cursor: pointer; font-size: 14px;
-        }
+        .categories { display: flex; overflow-x: auto; justify-content: center; padding: 10px; gap: 8px; }
+        .cat-btn { background: #ebebeb; border: none; padding: 8px 15px; border-radius: 20px; font-weight: 500; cursor: pointer; }
         .cat-btn.active { background: var(--main-blue); color: white; }
 
-        .products-grid {
-            display: grid; gap: 10px; padding: 10px; max-width: 1200px;
-            margin: 0 auto; grid-template-columns: 1fr 1fr;
-        }
+        .products-grid { display: grid; gap: 10px; padding: 10px; grid-template-columns: 1fr 1fr; max-width: 1200px; margin: 0 auto; }
+        .product-card { background: white; border-radius: 15px; padding: 10px; display: flex; flex-direction: column; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+        .product-card img { width: 100%; height: 110px; object-fit: cover; border-radius: 10px; }
 
-        @media (min-width: 600px) {
-            .products-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; padding: 20px; }
-        }
-
-        .product-card {
-            background: white; border-radius: 15px; padding: 10px;
-            display: flex; flex-direction: column; box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-        }
-
-        .product-card img { width: 100%; height: 110px; object-fit: cover; border-radius: 10px; cursor: pointer; }
-
-        .product-card h3 { font-size: 14px; margin: 10px 0 5px; height: 34px; overflow: hidden; font-weight: 600; }
-
-        .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
-        .price { font-weight: 800; font-size: 14px; }
-
-        .add-btn {
-            background: var(--main-blue); color: white; border: none;
-            width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer;
-        }
+        .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 10px; }
+        .price { font-weight: 800; }
+        .add-btn { background: var(--main-blue); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; cursor: pointer; }
 
         .counter { display: flex; align-items: center; background: #f0f0f0; border-radius: 15px; padding: 2px; }
-        .counter button { background: white; border: 1px solid #ddd; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; }
-        .counter span { min-width: 20px; text-align: center; font-weight: bold; font-size: 13px; }
+        .counter button { background: white; border: none; width: 26px; height: 26px; border-radius: 50%; font-weight: bold; cursor: pointer; }
+        .counter span { min-width: 25px; text-align: center; font-weight: bold; }
 
-        /* Поля ввода (изначально скрыты) */
+        /* НИЖНЯЯ ПАНЕЛЬ */
+        #order-container {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 92%; max-width: 450px; z-index: 1000; display: none;
+        }
         #customer-info {
-            background: white; padding: 15px; margin: 15px; border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: none;
+            background: white; padding: 15px; margin-bottom: 10px; border-radius: 20px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.15);
         }
         #customer-info input {
-            width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd;
-            border-radius: 10px; box-sizing: border-box; font-size: 16px;
+            width: 100%; padding: 12px; margin-bottom: 8px; border: 1px solid #ddd;
+            border-radius: 12px; box-sizing: border-box; font-size: 16px; outline: none;
         }
-
         #order-bar {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 400px; background: var(--main-blue); color: white;
-            padding: 14px; border-radius: 14px; display: none; text-align: center;
-            font-weight: bold; cursor: pointer; z-index: 1000;
+            background: var(--main-blue); color: white; padding: 18px; border-radius: 20px;
+            text-align: center; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: 0.3s;
         }
 
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000; }
-        .modal-content { background: white; padding: 20px; border-radius: 20px; width: 80%; max-width: 400px; position: relative; }
+        .modal-content { background: white; padding: 20px; border-radius: 20px; width: 85%; max-width: 400px; position: relative; }
         .close-modal { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; }
-        .info-btn { background: #eee; border: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -109,15 +66,13 @@
 
 <main class="products-grid" id="container"></main>
 
-<div id="order-container" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; z-index: 1000; display: none;">
-
-    <div id="customer-info" style="background: white; padding: 15px; margin-bottom: 10px; border-radius: 15px; box-shadow: 0 -5px 20px rgba(0,0,0,0.1);">
-        <h4 style="margin: 0 0 10px 0; color: #333;">Куди відправити?</h4>
-        <input type="text" id="cust-name" placeholder="Ваше ім'я" style="width: 100%; padding: 12px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box;">
-        <input type="tel" id="cust-phone" placeholder="Номер телефону" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box;">
+<div id="order-container">
+    <div id="customer-info">
+        <h4 style="margin: 0 0 10px 0;">Контактні дані:</h4>
+        <input type="text" id="cust-name" placeholder="Ваше ім'я">
+        <input type="tel" id="cust-phone" placeholder="Номер телефону">
     </div>
-
-    <div id="order-bar" onclick="sendOrder()" style="background: var(--main-blue); color: white; padding: 16px; border-radius: 15px; text-align: center; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+    <div id="order-bar" onclick="sendOrder()">
         <span id="order-btn-text">Замовити:</span> <span id="total-price">0</span> грн
     </div>
 </div>
@@ -131,36 +86,24 @@
 </div>
 
 <script>
-    // Работа с Telegram WebApp
     const tg = window.Telegram.WebApp;
-    tg.expand(); // Развернуть на весь экран
+    tg.expand();
 
-    const DATA_URL = 'products.json';
     const RENDER_API_URL = 'https://shop-test-zcei.onrender.com/api/send-order';
-    const TARGET_CHAT_ID = '5447056649';
+    const TARGET_CHAT_ID = '5447056649'; // Твой личный ID
 
     let allProducts = [];
     let cart = {};
 
     document.addEventListener('DOMContentLoaded', async () => {
         try {
-            const res = await fetch(DATA_URL);
+            const res = await fetch('products.json');
             allProducts = await res.json();
             render(allProducts);
-
-            // Если зашли через ТГ, попробуем подставить имя
             if (tg.initDataUnsafe?.user?.first_name) {
                 document.getElementById('cust-name').value = tg.initDataUnsafe.user.first_name;
             }
         } catch (e) { console.error("Ошибка загрузки"); }
-
-        const title = document.getElementById('main-title');
-        let clicks = 0;
-        title.addEventListener('click', () => {
-            clicks++;
-            if (clicks === 5) window.location.href = 'admin.html';
-            setTimeout(() => clicks = 0, 3000);
-        });
     });
 
     function render(items) {
@@ -169,11 +112,8 @@
             const qty = cart[p.id] || 0;
             return `
             <div class="product-card">
-                <img src="${p.image || 'https://via.placeholder.com/150'}" onclick="showDesc('${p.name}', '${p.description || ''}')">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px;">
-                    <h3>${p.name}</h3>
-                    <button class="info-btn" onclick="showDesc('${p.name}', '${p.description || ''}')">ⓘ</button>
-                </div>
+                <img src="${p.image || ''}" onclick="showDesc('${p.name}', '${p.description || ''}')">
+                <h3 style="font-size:14px; margin:10px 0;">${p.name}</h3>
                 <div class="card-footer">
                     <div class="price">${p.price} грн</div>
                     ${qty > 0 ? `
@@ -198,86 +138,24 @@
     }
 
     function updateOrderBar() {
-    let total = 0;
-    Object.keys(cart).forEach(id => {
-        const p = allProducts.find(item => item.id == id);
-        if (p) total += p.price * cart[id];
-    });
-
-    const container = document.getElementById('order-container');
-    if (total > 0) {
-        container.style.display = 'block';
-        document.getElementById('total-price').innerText = total;
-    } else {
-        container.style.display = 'none';
-    }
-}
-
-    function filterItems(cat, btn) {
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        render(cat === 'all' ? allProducts : allProducts.filter(p => p.category === cat));
-    }
-
-    function showDesc(name, desc) {
-        document.getElementById('modal-title').innerText = name;
-        document.getElementById('modal-text').innerText = desc || "Смачна страва за нашим рецептом!";
-        document.getElementById('desc-modal').style.display = 'flex';
-    }
-
-    function closeDesc() { document.getElementById('desc-modal').style.display = 'none'; }
-
-
-async function sendOrder() {
-    const orderBar = document.getElementById('order-bar');
-    const btnText = document.getElementById('order-btn-text');
-
-    // 1. ПРОВЕРКА: Если кнопка уже нажата, выходим из функции
-    if (orderBar.classList.contains('disabled')) return;
-
-    const name = document.getElementById('cust-name').value;
-    const phone = document.getElementById('cust-phone').value;
-
-    if (!name || !phone) {
-        alert("Будь ласка, введіть ім'я та телефон!");
-        return;
-    }
-
-    // 2. БЛОКИРОВКА: Делаем кнопку серой и меняем текст
-    orderBar.classList.add('disabled');
-    orderBar.style.backgroundColor = '#ccc'; // Серый цвет
-    orderBar.style.cursor = 'not-allowed';
-    btnText.innerText = 'Надсилаємо...';
-
-    // Формируем сообщение (твой текущий код формирования message)
-    let message = `👤 *Нове замовлення!*\n...`;
-    // ... (весь остальной код формирования сообщения) ...
-
-    try {
-        const response = await fetch(RENDER_API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ order: message, chat_id: TARGET_CHAT_ID })
+        let total = 0;
+        Object.keys(cart).forEach(id => {
+            const p = allProducts.find(item => item.id == id);
+            if (p) total += p.price * cart[id];
         });
-
-        if (response.ok) {
-            alert("✅ Замовлення прийнято!");
-            cart = {};
-            render(allProducts); // Это очистит корзину и скроет бар
+        const container = document.getElementById('order-container');
+        if (total > 0) {
+            container.style.display = 'block';
+            document.getElementById('total-price').innerText = total;
+        } else {
+            container.style.display = 'none';
         }
-    } catch (e) {
-        alert("Помилка зв'язку.");
-    } finally {
-        // 3. РАЗБЛОКИРОВКА: В любом случае (даже при ошибке) возвращаем кнопку в строй
-        orderBar.classList.remove('disabled');
-        orderBar.style.backgroundColor = 'var(--main-blue)';
-        orderBar.style.cursor = 'pointer';
-        btnText.innerText = 'Замовити:';
     }
-}
 
+    async function sendOrder() {
+        const orderBar = document.getElementById('order-bar');
+        if (orderBar.style.opacity === '0.5') return; // Защита от спама
 
-  /*  async function sendOrder() {
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('cust-phone').value;
 
@@ -286,25 +164,32 @@ async function sendOrder() {
             return;
         }
 
-// Сначала объявляем пустую строку
-let message = `👤 *Нове замовлення!*\n`;
-message += `━━━━━━━━━━━━━━━━━━\n`;
-message += `👤 *Клієнт:* ${name}\n`;
-message += `📞 *Телефон:* ${phone}\n`;
-message += `━━━━━━━━━━━━━━━━━━\n\n`;
+        // --- СБОРКА СООБЩЕНИЯ ---
+        let message = `👤 *Нове замовлення!*\n`;
+        message += `━━━━━━━━━━━━━━━━━━\n`;
+        message += `👤 *Клієнт:* ${name}\n`;
+        message += `📞 *Телефон:* ${phone}\n`;
 
-// Потом добавляем товары
-let total = 0;
-Object.keys(cart).forEach(id => {
-    const p = allProducts.find(item => item.id == id);
-    if (p) {
-        const sum = p.price * cart[id];
-        message += `🔹 *${p.name}* x ${cart[id]} = ${sum} грн\n`;
-        total += sum;
-    }
-});
+        if (tg.initDataUnsafe?.user) {
+            message += `🆔 *TG:* @${tg.initDataUnsafe.user.username || 'no_nick'}\n`;
+        }
+        message += `━━━━━━━━━━━━━━━━━━\n\n`;
 
-message += `\n━━━━━━━━━━━━━━━━━━\n💰 *РАЗОМ: ${total} грн*`;
+        let total = 0;
+        Object.keys(cart).forEach(id => {
+            const p = allProducts.find(item => item.id == id);
+            if (p) {
+                const sum = p.price * cart[id];
+                message += `🔹 *${p.name}* x ${cart[id]} = ${sum} грн\n`;
+                total += sum;
+            }
+        });
+
+        message += `\n━━━━━━━━━━━━━━━━━━\n💰 *РАЗОМ: ${total} грн*`;
+
+        // Блокировка кнопки
+        orderBar.style.opacity = '0.5';
+        document.getElementById('order-btn-text').innerText = 'Надсилаємо...';
 
         try {
             const response = await fetch(RENDER_API_URL, {
@@ -314,13 +199,31 @@ message += `\n━━━━━━━━━━━━━━━━━━\n💰 *РА
             });
 
             if (response.ok) {
-                alert("✅ Замовлення прийнято! Ми вам зателефонуємо.");
+                alert("✅ Замовлення прийнято!");
                 cart = {};
                 render(allProducts);
             }
-        } catch (e) { alert("Помилка зв'язку з сервером."); }
+        } catch (e) {
+            alert("Помилка зв'язку.");
+        } finally {
+            orderBar.style.opacity = '1';
+            document.getElementById('order-btn-text').innerText = 'Замовити:';
+        }
     }
-    */
+
+    function filterItems(cat, btn) {
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        render(cat === 'all' ? allProducts : allProducts.filter(p => p.category === cat));
+    }
+
+    function showDesc(name, desc) {
+        document.getElementById('modal-title').innerText = name;
+        document.getElementById('modal-text').innerText = desc || "Смачна страва!";
+        document.getElementById('desc-modal').style.display = 'flex';
+    }
+
+    function closeDesc() { document.getElementById('desc-modal').style.display = 'none'; }
 </script>
 </body>
 </html>
