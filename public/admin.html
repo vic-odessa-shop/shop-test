@@ -1,272 +1,156 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Shop Manager v3.1 (Safe Mode)</title>
+    <title>Адмін-панель</title>
     <style>
-        /* Стили оставляем те же, они работают отлично */
-        :root { --primary: #0088cc; --danger: #e74c3c; --warn: #f39c12; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .header-actions { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 1px solid #ddd; padding-bottom: 15px; }
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; }
-        .tab-btn { padding: 10px 20px; border: none; background: none; cursor: pointer; font-weight: bold; color: #666; }
-        .tab-btn.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #f8f9fa; padding: 12px; text-align: left; cursor: pointer; border-bottom: 2px solid #dee2e6; }
-        td { padding: 12px; border-bottom: 1px solid #eee; }
-        input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        .main-btn { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; }
-        .btn-edit { background: var(--warn); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px; }
-        .btn-del { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-        .secondary-btn { background: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 12px; }
-        #log { margin: 15px 0; padding: 10px; border-radius: 6px; display: none; }
-        .error { background: #f8d7da; color: #721c24; display: block; }
-        .success { background: #d4edda; color: #155724; display: block; }
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f9; max-width: 1000px; margin: 0 auto; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; }
+        .save-btn { background: #28a745; width: 100%; font-size: 16px; }
+        .edit-btn { background: #007bff; }
+        .delete-btn { background: #dc3545; }
+        .stock-low { color: red; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header-actions">
-        <input type="password" id="gh-token" style="width: 250px" placeholder="GitHub Token (ghp_...)">
-        <button class="secondary-btn" onclick="saveNewKey()">💾 Зашифровать и сохранить</button>
-        <button class="secondary-btn" style="background: #dc3545" onclick="clearAccess()">🚫 Сбросить данные</button>
+<h2>Управління магазином</h2>
+
+<div id="auth-block" class="card">
+    <h4>Вхід в систему</h4>
+    <input type="password" id="admin-pass" placeholder="Введіть пароль">
+    <button onclick="loadData()" class="btn edit-btn">Увійти</button>
+</div>
+
+<div id="admin-content" style="display:none;">
+    <div class="card">
+        <h4>Додати / Редагувати товар</h4>
+        <input type="hidden" id="p-id">
+        <input type="text" id="p-name" placeholder="Назва товару">
+        <div style="display: flex; gap: 10px;">
+            <input type="number" id="p-price" placeholder="Ціна">
+            <input type="number" id="p-stock" placeholder="Кількість (stock)">
+        </div>
+        <input type="text" id="p-category" placeholder="Категорія (Піца, Напої...)">
+        <textarea id="p-desc" placeholder="Опис"></textarea>
+        <input type="text" id="p-image" placeholder="URL картинки">
+        <button onclick="saveProduct()" class="btn save-btn">ЗБЕРЕГТИ ЗМІНИ</button>
     </div>
 
-    <div class="tabs">
-        <button class="tab-btn active" id="btn-tab-list" onclick="switchTab('list')">📦 Список товаров</button>
-        <button class="tab-btn" id="btn-tab-add" onclick="switchTab('add')">➕ Управление</button>
-    </div>
-
-    <div id="log"></div>
-
-    <div id="tab-list">
-        <table id="productsTable">
-            <thead>
-            <tr>
-                <th onclick="sortTable('name')">Товар ↕</th>
-                <th onclick="sortTable('category')">Кат. ↕</th>
-                <th onclick="sortTable('price')">Цена ↕</th>
-                <th>Действия</th>
-            </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
-    </div>
-
-    <div id="tab-add" style="display:none;">
-        <h2 id="form-title">Добавить новый товар</h2>
-        <input type="text" id="p-name" placeholder="Название товара">
-        <input type="number" id="p-price" placeholder="Цена">
-        <input type="text" id="p-cat" placeholder="Категория">
-        <input type="text" id="p-img" placeholder="URL картинки">
-        <button class="main-btn" id="save-btn" onclick="processSave()">Сохранить на GitHub</button>
-        <button class="secondary-btn" style="margin-top:10px; width:100%" onclick="cancelEdit()">Отмена / Назад</button>
-    </div>
+    <table id="products-table">
+        <thead>
+        <tr>
+            <th>Товар</th>
+            <th>Ціна</th>
+            <th>Склад</th>
+            <th>Дії</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 </div>
 
 <script>
-// ОСНОВНЫЕ НАСТРОЙКИ
-const REPO = 'vic-odessa-shop/shop-test'; // Твой репозиторий
-const FILE = 'public/products.json';      // Путь к базе данных
-let allProducts = [];                    // Сюда загрузим все товары
-let currentSHA = '';                     // Нужен для GitHub API (метка версии файла)
-let editIndex = null;                    // Индекс товара, если мы в режиме редактирования
+        let allProducts = [];
 
-// --- ФУНКЦИИ БЕЗОПАСНОСТИ ---
+        async function loadData() {
+            const pass = document.getElementById('admin-pass').value;
+            if (!pass) return alert("Введіть пароль!");
 
-// Функция XOR шифрования (безопасна для спецсимволов и кириллицы)
-const xorCipher = (str, key) => {
-    if (!key) return str;
-    return str.split('').map((char, i) =>
-        String.fromCharCode(char.charCodeAt(0) ^ key.charCodeAt(i % key.length))
-    ).join('');
-};
-
-// Зашифровать и сохранить в браузер
-function saveNewKey() {
-    const key = document.getElementById('gh-token').value.trim();
-    if(!key.startsWith('ghp_')) return alert("Введите рабочий GitHub токен!");
-
-    const pass = prompt("Придумайте пароль для доступа к этой странице:");
-    if(pass) {
-        // Сначала переводим в Base64, потом XOR, чтобы избежать проблем с кодировкой
-        const encrypted = btoa(xorCipher(key, pass));
-        localStorage.setItem('gh_token_enc', encrypted);
-        alert("Готово! Ключ зашифрован.");
-        loadData();
-    }
-}
-
-// Очистить кэш браузера (выход из системы)
-function clearAccess() {
-    if(confirm("Это удалит сохраненный ключ. Продолжить?")) {
-        localStorage.removeItem('gh_token_enc');
-        location.reload();
-    }
-}
-
-// --- ЛОГИКА РАБОТЫ С ДАННЫМИ ---
-
-// Загрузка данных с GitHub
-async function loadData() {
-    const token = document.getElementById('gh-token').value.trim();
-    if(!token) return;
-
-    try {
-        const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE}`, {
-            headers: { 'Authorization': `token ${token}` }
-        });
-        if(!res.ok) throw new Error("Доступ запрещен (проверьте токен)");
-
-        const data = await res.json();
-        currentSHA = data.sha; // Запоминаем SHA файла для будущих обновлений
-
-        // Декодируем содержимое файла из Base64 в читаемый JSON
-        const content = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
-        allProducts = JSON.parse(content);
-
-        renderTable(allProducts); // Рисуем таблицу
-    } catch (e) {
-        showLog("Ошибка загрузки: " + e.message, "error");
-    }
-}
-
-// Отрисовка таблицы товаров
-function renderTable(data) {
-    document.getElementById('tableBody').innerHTML = data.map((p, idx) => `
-        <tr>
-            <td>${p.name}</td>
-            <td>${p.category}</td>
-            <td>${p.price}</td>
-            <td>
-                <button class="btn-edit" onclick="startEdit(${idx})" title="Редактировать">⚙️</button>
-                <button class="btn-del" onclick="deleteItem(${idx})" title="Удалить">🗑️</button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-// Переключение вкладок (Список / Форма)
-function switchTab(tab) {
-    document.getElementById('tab-list').style.display = tab === 'list' ? 'block' : 'none';
-    document.getElementById('tab-add').style.display = tab === 'add' ? 'block' : 'none';
-    document.getElementById('btn-tab-list').classList.toggle('active', tab==='list');
-    document.getElementById('btn-tab-add').classList.toggle('active', tab==='add');
-}
-
-// --- РЕДАКТИРОВАНИЕ И УДАЛЕНИЕ ---
-
-// Включить режим редактирования для конкретного товара
-function startEdit(idx) {
-    editIndex = idx;
-    const p = allProducts[idx];
-    document.getElementById('p-name').value = p.name;
-    document.getElementById('p-price').value = p.price;
-    document.getElementById('p-cat').value = p.category;
-    document.getElementById('p-img').value = p.image;
-    document.getElementById('form-title').innerText = "Редактирование: " + p.name;
-    switchTab('add');
-}
-
-// Отмена редактирования (очистка полей)
-function cancelEdit() {
-    editIndex = null;
-    document.getElementById('p-name').value = '';
-    document.getElementById('p-price').value = '';
-    document.getElementById('p-cat').value = '';
-    document.getElementById('p-img').value = '';
-    document.getElementById('form-title').innerText = "Добавить новый товар";
-    switchTab('list');
-}
-
-// Сохранение (и для новых, и для измененных)
-async function processSave() {
-    const token = document.getElementById('gh-token').value.trim();
-    if(!token) return alert("Нет доступа");
-
-    const p = {
-        id: editIndex !== null ? allProducts[editIndex].id : Date.now(),
-        name: document.getElementById('p-name').value,
-        price: parseInt(document.getElementById('p-price').value),
-        category: document.getElementById('p-cat').value,
-        image: document.getElementById('p-img').value || "https://loremflickr.com/300/300/food"
-    };
-
-    // Если мы редактируем - заменяем в массиве, если нет - добавляем в конец
-    if (editIndex !== null) allProducts[editIndex] = p;
-    else allProducts.push(p);
-
-    await syncWithGitHub("Update: " + p.name);
-}
-
-// Удаление товара
-async function deleteItem(idx) {
-    if(!confirm("Удалить товар из базы?")) return;
-    allProducts.splice(idx, 1);
-    await syncWithGitHub("Delete item");
-}
-
-// ФИНАЛЬНЫЙ ШАГ: Отправка обновленного массива на GitHub
-async function syncWithGitHub(message) {
-    const token = document.getElementById('gh-token').value.trim();
-    // Кодируем данные в Base64 для GitHub API
-    const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(allProducts, null, 2))));
-
-    try {
-        const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE}`, {
-            method: 'PUT',
-            headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: message, content: b64, sha: currentSHA })
-        });
-
-        if(res.ok) {
-            showLog("✅ Гитхаб успешно обновлен!", "success");
-            cancelEdit();
-            loadData(); // Перезагружаем список, чтобы получить новый SHA
-        } else {
-            throw new Error("Ошибка GitHub API");
-        }
-    } catch (e) { showLog("Ошибка сохранения: " + e.message, "error"); }
-}
-
-// Сортировка таблицы
-function sortTable(key) {
-    allProducts.sort((a,b) => a[key] > b[key] ? 1 : -1);
-    renderTable(allProducts);
-}
-
-// Показ уведомлений
-function showLog(text, type) {
-    const l = document.getElementById('log');
-    l.innerText = text; l.className = type;
-    l.style.display = 'block';
-    setTimeout(() => l.style.display = 'none', 4000);
-}
-
-// ЗАПУСК ПРИ ЗАГРУЗКЕ СТРАНИЦЫ
-window.onload = async () => {
-    const enc = localStorage.getItem('gh_token_enc');
-    if (enc) {
-        const pass = prompt("Вход в админку. Введите пароль:");
-        if (pass) {
             try {
-                // Расшифровка: сначала из Base64, потом XOR
-                const dec = xorCipher(atob(enc), pass);
-                if (dec.startsWith('ghp_')) {
-                    document.getElementById('gh-token').value = dec;
-                    await loadData();
-                } else {
-                    alert("Неверный пароль!");
-                    location.reload();
-                }
-            } catch(e) {
-                alert("Ошибка ключа. Нажмите 'Сбросить данные' если забыли пароль.");
+                // Загружаем товары напрямую из JSON (публично)
+                const res = await fetch('products.json?v=' + Date.now());
+                allProducts = await res.json();
+
+                document.getElementById('auth-block').style.display = 'none';
+                document.getElementById('admin-content').style.display = 'block';
+                renderTable();
+            } catch (e) { alert("Помилка завантаження даних"); }
+        }
+
+        function renderTable() {
+            const tbody = document.querySelector('#products-table tbody');
+            tbody.innerHTML = allProducts.map(p => `
+                <tr>
+                    <td><b>${p.name}</b><br><small>${p.category}</small></td>
+                    <td>${p.price} грн</td>
+                    <td class="${p.stock < 3 ? 'stock-low' : ''}">${p.stock} шт</td>
+                    <td>
+                        <button class="btn edit-btn" onclick="fillForm(${p.id})">⚙️</button>
+                        <button class="btn delete-btn" onclick="deleteProduct(${p.id})">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function fillForm(id) {
+            const p = allProducts.find(x => x.id == id);
+            document.getElementById('p-id').value = p.id;
+            document.getElementById('p-name').value = p.name;
+            document.getElementById('p-price').value = p.price;
+            document.getElementById('p-stock').value = p.stock;
+            document.getElementById('p-category').value = p.category;
+            document.getElementById('p-desc').value = p.description || "";
+            document.getElementById('p-image').value = p.image || "";
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        async function saveProduct() {
+            const id = document.getElementById('p-id').value;
+            const product = {
+                id: id ? parseInt(id) : Date.now(),
+                name: document.getElementById('p-name').value,
+                price: parseInt(document.getElementById('p-price').value),
+                stock: parseInt(document.getElementById('p-stock').value),
+                category: document.getElementById('p-category').value,
+                description: document.getElementById('p-desc').value,
+                image: document.getElementById('p-image').value
+            };
+
+            if (id) {
+                const idx = allProducts.findIndex(x => x.id == id);
+                allProducts[idx] = product;
+            } else {
+                allProducts.push(product);
+            }
+
+            await syncWithServer();
+        }
+
+        async function deleteProduct(id) {
+            if (!confirm("Видалити?")) return;
+            allProducts = allProducts.filter(x => x.id != id);
+            await syncWithServer();
+        }
+
+        async function syncWithServer() {
+            const pass = document.getElementById('admin-pass').value;
+
+            const res = await fetch('/api/admin/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    password: pass,
+                    filename: 'products.json',
+                    data: allProducts
+                })
+            });
+
+            if (res.ok) {
+                alert("✅ Збережено на сервері!");
+                renderTable();
+                // Очистка формы
+                document.getElementById('p-id').value = "";
+                document.querySelectorAll('#admin-content input, #admin-content textarea').forEach(i => i.value = "");
+            } else {
+                const err = await res.json();
+                alert("❌ Помилка: " + err.error);
             }
         }
-    }
-};
-</script>
+    </script>
 </body>
 </html>
