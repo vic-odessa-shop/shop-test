@@ -116,7 +116,7 @@
 </div>
 
 <div id="order-bar" onclick="sendOrder()">
-    Замовити: <span id="total-price">0</span> грн
+    <span id="order-btn-text">Замовити:</span> <span id="total-price">0</span> грн
 </div>
 
 <div id="desc-modal" class="modal">
@@ -228,7 +228,57 @@
 
     function closeDesc() { document.getElementById('desc-modal').style.display = 'none'; }
 
-    async function sendOrder() {
+
+async function sendOrder() {
+    const orderBar = document.getElementById('order-bar');
+    const btnText = document.getElementById('order-btn-text');
+
+    // 1. ПРОВЕРКА: Если кнопка уже нажата, выходим из функции
+    if (orderBar.classList.contains('disabled')) return;
+
+    const name = document.getElementById('cust-name').value;
+    const phone = document.getElementById('cust-phone').value;
+
+    if (!name || !phone) {
+        alert("Будь ласка, введіть ім'я та телефон!");
+        return;
+    }
+
+    // 2. БЛОКИРОВКА: Делаем кнопку серой и меняем текст
+    orderBar.classList.add('disabled');
+    orderBar.style.backgroundColor = '#ccc'; // Серый цвет
+    orderBar.style.cursor = 'not-allowed';
+    btnText.innerText = 'Надсилаємо...';
+
+    // Формируем сообщение (твой текущий код формирования message)
+    let message = `👤 *Нове замовлення!*\n...`;
+    // ... (весь остальной код формирования сообщения) ...
+
+    try {
+        const response = await fetch(RENDER_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order: message, chat_id: TARGET_CHAT_ID })
+        });
+
+        if (response.ok) {
+            alert("✅ Замовлення прийнято!");
+            cart = {};
+            render(allProducts); // Это очистит корзину и скроет бар
+        }
+    } catch (e) {
+        alert("Помилка зв'язку.");
+    } finally {
+        // 3. РАЗБЛОКИРОВКА: В любом случае (даже при ошибке) возвращаем кнопку в строй
+        orderBar.classList.remove('disabled');
+        orderBar.style.backgroundColor = 'var(--main-blue)';
+        orderBar.style.cursor = 'pointer';
+        btnText.innerText = 'Замовити:';
+    }
+}
+
+
+  /*  async function sendOrder() {
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('cust-phone').value;
 
@@ -276,6 +326,7 @@
             }
         } catch (e) { alert("Помилка зв'язку з сервером."); }
     }
+    */
 </script>
 </body>
 </html>
