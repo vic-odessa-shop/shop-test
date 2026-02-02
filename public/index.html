@@ -6,35 +6,141 @@
     <title>Vic Odessa Shop</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --tg-color: #0088cc; }
-        body { font-family: sans-serif; background: #f4f4f4; margin: 0; padding-bottom: 120px; }
-        header { background: #fff; padding: 10px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .categories { display: flex; overflow-x: auto; padding: 10px; gap: 8px; scrollbar-width: none; }
-        .cat-btn { background: #e0e0e0; border: none; padding: 8px 15px; border-radius: 20px; white-space: nowrap; font-size: 13px; font-weight: bold; }
-        .cat-btn.active { background: var(--tg-color); color: #fff; }
+        :root {
+            --tg-color: #0088cc;
+            --bg-color: #f4f4f7;
+            --card-bg: #ffffff;
+            --text-main: #222;
+        }
 
-        /* СЕТКА 2 В РЯД */
-        .products-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
-        .product-card { background: #fff; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .product-card img { width: 100%; height: 100px; object-fit: cover; border-radius: 8px; }
-        .product-name { font-size: 14px; font-weight: bold; margin: 8px 0; height: 35px; overflow: hidden; }
-        .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
-        .price { font-weight: bold; font-size: 15px; }
-        .add-btn { background: var(--tg-color); color: #fff; border: none; width: 35px; height: 35px; border-radius: 50%; font-weight: bold; font-size: 18px; }
+        body {
+            font-family: -apple-system, system-ui, sans-serif;
+            background: var(--bg-color);
+            margin: 0;
+            padding-bottom: 140px;
+            color: var(--text-main);
+        }
 
-        #order-ui { position: fixed; bottom: 20px; left: 5%; width: 90%; z-index: 1000; display: none; }
-        #customer-form { background: #fff; padding: 15px; border-radius: 15px; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); margin-bottom: 10px; }
-        #customer-form input { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
-        #main-button { background: var(--tg-color); color: #fff; padding: 18px; border-radius: 15px; text-align: center; font-weight: bold; cursor: pointer; }
-        .loading { background: #777 !important; cursor: wait; }
+        header {
+            background: var(--card-bg);
+            padding: 15px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .categories {
+            display: flex;
+            overflow-x: auto;
+            padding: 10px 5px;
+            gap: 10px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .categories::-webkit-scrollbar { display: none; }
+
+        .cat-btn {
+            background: #e0e0e0;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            white-space: nowrap;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .cat-btn.active {
+            background: var(--tg-color);
+            color: #fff;
+        }
+
+        /* СЕТКА: На телефоне 2 в ряд, на ПК - сколько влезет */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+            padding: 12px;
+        }
+
+        .product-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+        }
+
+        .info-icon {
+            position: absolute; top: 5px; right: 5px;
+            background: rgba(255,255,255,0.9); border-radius: 50%;
+            width: 24px; height: 24px; display: flex;
+            align-items: center; justify-content: center;
+            font-size: 14px; font-weight: bold; color: var(--tg-color);
+            cursor: pointer; border: 1px solid var(--tg-color);
+            z-index: 2;
+        }
+
+        .product-card img {
+            width: 100%; height: 120px;
+            object-fit: cover; border-radius: 12px;
+        }
+
+        .product-name {
+            font-size: 14px; font-weight: 600;
+            margin: 10px 0 5px 0; height: 38px; overflow: hidden;
+        }
+
+        .card-footer {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: auto;
+        }
+
+        .price { font-weight: 800; font-size: 16px; }
+
+        .add-btn {
+            background: var(--tg-color); color: #fff; border: none;
+            width: 35px; height: 35px; border-radius: 50%;
+            font-size: 20px; cursor: pointer;
+        }
+
+        #order-ui {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: var(--card-bg); box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+            border-radius: 20px 20px 0 0; padding: 15px;
+            box-sizing: border-box; z-index: 1000; display: none;
+        }
+
+        #customer-form input {
+            width: 100%; padding: 12px; margin-bottom: 8px;
+            border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box;
+        }
+
+        .btn-group { display: flex; gap: 10px; }
+
+        #main-button {
+            flex: 3; background: var(--tg-color); color: #fff;
+            padding: 15px; border-radius: 12px; text-align: center;
+            font-weight: bold; cursor: pointer;
+        }
+
+        #cancel-button {
+            flex: 1; background: #ff3b30; color: #fff;
+            padding: 15px; border-radius: 12px; text-align: center;
+            font-weight: bold; cursor: pointer;
+        }
+
+        .loading-state { background: #777 !important; cursor: wait; }
     </style>
 </head>
 <body>
 
 <header>
-    <div style="font-weight: 900; color: var(--tg-color); margin-bottom: 5px;">VIC ODESSA SHOP</div>
+    <div style="font-weight: 900; color: var(--tg-color); font-size: 20px;">VIC ODESSA SHOP</div>
     <div class="categories" id="cat-list">
-        <button class="cat-btn active" onclick="filter('all', this)">Все</button>
+        <button class="cat-btn active" onclick="filter('all', this)">Всі</button>
     </div>
 </header>
 
@@ -45,8 +151,11 @@
         <input type="text" id="cust-name" placeholder="Ваше ім'я">
         <input type="tel" id="cust-phone" placeholder="Номер телефону">
     </div>
-    <div id="main-button" onclick="handleButtonClick()">
-        КОШИК: <span id="total-price">0</span> ₴
+    <div class="btn-group">
+        <div id="cancel-button" onclick="cancelOrder()">❌</div>
+        <div id="main-button" onclick="handleButtonClick()">
+            КОШИК: <span id="total-price">0</span> ₴
+        </div>
     </div>
 </div>
 
@@ -55,6 +164,7 @@
     const API_URL = 'https://shop-test-zcei.onrender.com';
     let allProducts = [];
     let cart = {};
+    let isServerWaking = false; // Флаг, чтобы не пинговать сервер сто раз
 
     async function load() {
         try {
@@ -64,16 +174,29 @@
             cats.forEach(c => {
                 document.getElementById('cat-list').innerHTML += `<button class="cat-btn" onclick="filter('${c}', this)">${c}</button>`;
             });
+            if (tg?.initDataUnsafe?.user?.first_name) {
+                document.getElementById('cust-name').value = tg.initDataUnsafe.user.first_name;
+            }
             render(allProducts);
         } catch (e) { alert("Помилка завантаження"); }
+    }
+
+    // --- ФУНКЦИЯ "БУДИЛЬНИК" ---
+    function wakeUpServer() {
+        if (isServerWaking) return; // Если уже будим, больше не шлем запросы
+        isServerWaking = true;
+        console.log("Пингуем сервер для пробуждения...");
+        fetch(API_URL + '/').catch(() => {}); // Просто стучимся в корень
     }
 
     function render(items) {
         const root = document.getElementById('container');
         root.innerHTML = items.map(p => {
             const qty = cart[p.name] || 0;
-            return `<div class="product-card">
-                <img src="${p.image || ''}">
+            return `
+            <div class="product-card">
+                <div class="info-icon" onclick="showDesc('${p.name}', '${p.desc || 'Опис відсутній'}')">i</div>
+                <img src="${p.image || ''}" onerror="this.src='https://placehold.co/200?text=No+Photo'">
                 <div class="product-name">${p.name}</div>
                 <div class="card-footer">
                     <span class="price">${p.price} ₴</span>
@@ -84,26 +207,40 @@
     }
 
     function addToCart(name) {
+        if (!isServerWaking) wakeUpServer(); // БУДИМ СЕРВЕР ПРИ ПЕРВОМ КЛИКЕ
         cart[name] = (cart[name] || 0) + 1;
         updateUI();
         render(getCurrentItems());
+        if (tg) tg.HapticFeedback.impactOccurred('medium');
     }
 
     function updateUI() {
         let sum = 0;
-        for (let name in cart) {
-            const p = allProducts.find(x => x.name === name);
-            if (p) sum += p.price * cart[name];
+        for (let n in cart) {
+            const p = allProducts.find(x => x.name === n);
+            if (p) sum += p.price * cart[n];
         }
         document.getElementById('order-ui').style.display = sum > 0 ? 'block' : 'none';
         document.getElementById('total-price').innerText = sum;
     }
 
+    function cancelOrder() {
+        if(confirm("Очистити кошик?")) {
+            cart = {};
+            document.getElementById('customer-form').style.display = 'none';
+            updateUI();
+            render(allProducts);
+        }
+    }
+
+    function showDesc(name, desc) { alert(`${name}\n\n${desc}`); }
+
     function handleButtonClick() {
         const form = document.getElementById('customer-form');
+        const btn = document.getElementById('main-button');
         if (form.style.display === 'none') {
             form.style.display = 'block';
-            document.getElementById('main-button').innerText = "ПІДТВЕРДИТИ ЗАМОВЛЕННЯ";
+            btn.innerText = "ПІДТВЕРДИТИ ЗАМОВЛЕННЯ";
         } else {
             send();
         }
@@ -113,11 +250,13 @@
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('cust-phone').value;
         const btn = document.getElementById('main-button');
+        const userId = tg?.initDataUnsafe?.user?.id || "Невідомо";
+        const username = tg?.initDataUnsafe?.user?.username || "-";
 
         if (!name || !phone) return alert("Заповніть контакти!");
 
-        btn.classList.add('loading');
-        btn.innerText = "ПРОКИДАЮСЬ (чекайте 30 сек)...";
+        btn.classList.add('loading-state');
+        btn.innerText = "ОБРОБКА (зачекайте)...";
 
         let itemsText = "";
         let sum = 0;
@@ -133,20 +272,17 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        order: `👤 Клієнт: ${name}\n📞 Тел: ${phone}\n🛒 Товари:${itemsText}`,
+                        order: `👤 Клієнт: ${name}\n📞 Тел: ${phone}\n🆔 ID: ${userId} (@${username})\n🛒 Товари:${itemsText}`,
                         total: sum
                     })
                 });
                 if (res.ok) {
-                    alert("Замовлення прийнято!");
-                    location.reload();
+                    tg.showAlert("Дякуємо за замовлення!", () => tg.close());
                 } else { throw new Error(); }
             } catch (e) {
-                // Если ошибка — пробуем еще раз через 3 секунды, пока сервер не проснется
                 setTimeout(trySend, 3000);
             }
         };
-
         trySend();
     }
 
