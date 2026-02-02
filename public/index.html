@@ -36,7 +36,6 @@
         }
         .cat-btn.active { background: var(--tg-color); color: #fff; }
 
-        /* АДАПТИВНАЯ СЕТКА: На телефоне 2, на ПК — по ширине */
         .products-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -96,7 +95,7 @@
 <body>
 
 <header>
-    <div style="font-weight: 900; color: var(--tg-color); font-size: 20px; letter-spacing: 0.5px;">VIC ODESSA SHOP</div>
+    <div style="font-weight: 900; color: var(--tg-color); font-size: 20px;">VIC ODESSA SHOP</div>
     <div class="categories" id="cat-list">
         <button class="cat-btn active" onclick="filter('all', this)">Всі</button>
     </div>
@@ -125,7 +124,6 @@
     let isServerWaking = false;
     let isSending = false;
 
-    // Инициализация
     async function load() {
         if (tg) { tg.ready(); tg.expand(); }
         try {
@@ -142,10 +140,11 @@
         } catch (e) { alert("Помилка завантаження меню"); }
     }
 
-    // Будим сервер заранее при первом добавлении в корзину
+    // БЕЗОБИДНЫЙ ЗАПРОС (Будильник)
     function wakeUpServer() {
         if (isServerWaking) return;
         isServerWaking = true;
+        console.log("Будимо сервер...");
         fetch(API_URL + '/').catch(() => {});
     }
 
@@ -167,7 +166,7 @@
     }
 
     function addToCart(name) {
-        wakeUpServer(); // Пинг сервера
+        wakeUpServer(); // Стукаємо один раз при першому виборі
         cart[name] = (cart[name] || 0) + 1;
         updateUI();
         render(getCurrentItems());
@@ -188,7 +187,6 @@
         if(confirm("Очистити кошик?")) {
             cart = {};
             document.getElementById('customer-form').style.display = 'none';
-            document.getElementById('main-button').innerText = "КОШИК: 0 ₴";
             updateUI();
             render(allProducts);
         }
@@ -210,7 +208,7 @@
         }
     }
 
-    // УЛУЧШЕННАЯ ОТПРАВКА: Терпеливая и без дублей
+    // ЧИСТАЯ ОТПРАВКА БЕЗ ПОВТОРОВ
     async function sendOrder() {
         if (isSending) return;
 
@@ -218,13 +216,11 @@
         const phone = document.getElementById('cust-phone').value.trim();
         const btn = document.getElementById('main-button');
 
-        if (!name || !phone) {
-            return alert("Будь ласка, вкажіть ім'я та телефон для зв'язку");
-        }
+        if (!name || !phone) return alert("Вкажіть дані!");
 
         isSending = true;
         btn.classList.add('loading-state');
-        btn.innerText = "ОБРОБКА... ЗАЧЕКАЙТЕ 15-30 СЕК.";
+        btn.innerText = "ВІДПРАВКА...";
 
         let itemsText = "";
         let sum = 0;
@@ -237,40 +233,30 @@
         const userId = tg?.initDataUnsafe?.user?.id || "Невідомо";
         const username = tg?.initDataUnsafe?.user?.username || "-";
 
-        // Функция-повторитель (только если сервер реально лежит, а не просто долго думает)
-        const performRequest = async () => {
-            try {
-                const res = await fetch(API_URL + '/api/send-order', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        order: `👤 Клієнт: ${name}\n📞 Тел: ${phone}\n🆔 ID: ${userId} (@${username})\n🛒 Товари:${itemsText}`,
-                        total: sum
-                    })
-                });
+        try {
+            // ОДИН ЗАПРОС. Браузер будет ждать до 60 секунд сам.
+            const res = await fetch(API_URL + '/api/send-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    order: `👤 Клієнт: ${name}\n📞 Тел: ${phone}\n🆔 ID: ${userId} (@${username})\n🛒 Товари:${itemsText}`,
+                    total: sum
+                })
+            });
 
-                if (res.ok) {
-                    if (tg) {
-                        tg.showPopup({
-                            title: 'Успіх!',
-                            message: 'Замовлення прийнято. Ми зв\'яжемося з вами найближчим часом.',
-                            buttons: [{type: 'ok'}]
-                        }, () => tg.close());
-                    } else {
-                        alert("Замовлення прийнято!");
-                        location.reload();
-                    }
-                } else {
-                    throw new Error("Retry");
-                }
-            } catch (e) {
-                // Если произошел тайм-аут или ошибка сети, пробуем еще ОДИН раз через 5 сек
-                console.log("Очікування сервера...");
-                setTimeout(performRequest, 5000);
+            if (res.ok) {
+                if (tg) { tg.showAlert("Замовлення прийнято!", () => tg.close()); }
+                else { alert("Замовлення прийнято!"); location.reload(); }
+            } else {
+                throw new Error("Server sleep");
             }
-        };
-
-        performRequest();
+        } catch (e) {
+            // Если сервер не ответил, просто разблокируем кнопку. Никаких авто-повторов!
+            isSending = false;
+            btn.classList.remove('loading-state');
+            btn.innerText = "ПІДТВЕРДИТИ (сервер спить, ще раз)";
+            alert("Сервер прокидається. Будь ласка, натисніть ще раз через 5 секунд.");
+        }
     }
 
     function filter(cat, btn) {
