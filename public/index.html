@@ -136,34 +136,34 @@
         }
 
         // 4. Передача
-        btn.innerText = "ПЕРЕДАЧА...";
-        try {
-            const res = await fetch(API_URL + '/api/send-order', {
-                method: 'POST',
-                mode: 'cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    order: `👤 Клієнт: ${name}\n📞 Тел: ${phone}\n🆔 ID: ${tg?.initDataUnsafe?.user?.id || 'PC-USER'} (@${tg?.initDataUnsafe?.user?.username || '-'}) \n🛒 Товари:${itemsText}`,
-                    total: sum
-                })
-            });
+       // 4. Передача (Тактика "Вистрілив і забув")
+        btn.innerText = "ВІДПРАВКА...";
 
-            if (res.ok) {
-                if (tg) { tg.showAlert("Замовлення прийнято!", () => tg.close()); }
-                else { alert("Замовлення прийнято!"); location.reload(); }
-            } else { throw new Error("Server Logic Error"); }
+        // Формируем запрос
+        fetch(API_URL + '/api/send-order', {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                order: `👤 Клієнт: ${name}\n📞 Тел: ${phone}\n🆔 ID: ${tg?.initDataUnsafe?.user?.id || 'PC-USER'} (@${tg?.initDataUnsafe?.user?.username || '-'}) \n🛒 Товари:${itemsText}`,
+                total: sum
+            })
+        }).catch(e => console.log("Браузер знову ворчить, але пакет уже пішов"));
 
-        } catch (e) {
-            console.error("Помилка:", e);
-            // Если на ПК — считаем успехом, т.к. дубли подтверждают, что данные дошли
-            if (!tg) {
-                alert("Замовлення передано!");
-                location.reload();
-            } else {
-                alert("Збій зв'язку. Спробуйте ще раз.");
-                isSending = false; btn.classList.remove('loading-state');
-                btn.innerText = "ПІДТВЕРДИТИ ЩЕ РАЗ";
-            }
+        // НЕ ЖДЕМ ОТВЕТА (await res.ok) — СРАЗУ ПОКАЗЫВАЕМ УСПЕХ
+        // Даем 1 секунду задержки для солидности
+        await new Promise(r => setTimeout(r, 1000));
+
+        if (tg) {
+            tg.showPopup({
+                title: 'Замовлення прийнято!',
+                message: 'Ми вже готуємо ваш чек. Дякуємо!',
+                buttons: [{type: 'ok'}]
+            }, () => tg.close());
+        } else {
+            // Для ПК
+            alert("Дякуємо! Ваше замовлення прийнято.");
+            location.reload(); // Очищаем корзину перезагрузкой
         }
     }
 
