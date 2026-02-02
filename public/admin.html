@@ -2,54 +2,47 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Адмін-панель</title>
+    <title>Адмінка - Vic Odessa</title>
     <style>
         body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; max-width: 600px; margin: 0 auto 20px; }
-        input, textarea, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto 20px; }
+        input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         table { width: 100%; border-collapse: collapse; background: white; max-width: 800px; margin: 0 auto; }
         th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .save-btn { background: #28a745; color: white; width: 100%; margin-top: 10px; }
-        .edit-btn { background: #0088cc; color: white; margin-right: 5px; }
-        .del-btn { background: #ff3b30; color: white; }
+        .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; }
+        .save-btn { background: #28a745; width: 100%; }
+        .edit-btn { background: #0088cc; }
+        .del-btn { background: #ff3b30; }
     </style>
 </head>
 <body>
 
 <div class="card" id="auth-block">
-    <h3>🔐 Вхід до системи</h3>
-    <input type="password" id="admin-pass" placeholder="Введіть пароль">
-    <button onclick="loadData()" class="btn save-btn">Увійти</button>
+    <h3>🔑 Вхід</h3>
+    <input type="password" id="admin-pass" placeholder="Пароль">
+    <button onclick="loadData()" class="btn" style="background: #0088cc; width:100%;">Увійти</button>
 </div>
 
 <div id="admin-content" style="display:none;">
     <div class="card">
         <h3>📦 Редактор товару</h3>
         <input type="hidden" id="p-id">
-        <input type="text" id="p-name" placeholder="Назва товару">
-        <div style="display: flex; gap: 10px;">
-            <input type="number" id="p-price" placeholder="Ціна (грн)">
-            <input type="number" id="p-stock" placeholder="Склад (шт)">
-        </div>
+        <input type="text" id="p-name" placeholder="Назва">
+        <input type="number" id="p-price" placeholder="Ціна">
+        <input type="number" id="p-stock" placeholder="Склад (шт)">
         <select id="p-category">
             <option value="Піца">Піца</option>
-            <option value="Бургеры">Бургеры</option>
-            <option value="Напитки">Напитки</option>
+            <option value="Бургеры">Бургери</option>
+            <option value="Напитки">Напої</option>
         </select>
-        <input type="text" id="p-image" placeholder="Шлях до картинки (напр. img/pizza.jpg)">
-        <textarea id="p-desc" placeholder="Опис товару (description)" rows="3"></textarea>
-        <button onclick="saveProduct()" class="btn save-btn">ЗБЕРЕГТИ ТОВАР</button>
-        <button onclick="resetForm()" class="btn" style="width:100%; margin-top:5px; background: #eee;">Очистити</button>
+        <input type="text" id="p-image" placeholder="Картинка (img/1.jpg)">
+        <textarea id="p-desc" placeholder="Опис" rows="3"></textarea>
+        <button onclick="saveProduct()" class="btn save-btn">ЗБЕРЕГТИ</button>
     </div>
 
-    <table>
+    <table id="table">
         <thead>
-        <tr>
-            <th>Назва</th>
-            <th>Склад</th>
-            <th>Дії</th>
-        </tr>
+        <tr><th>Назва</th><th>Склад</th><th>Дії</th></tr>
         </thead>
         <tbody id="table-body"></tbody>
     </table>
@@ -59,26 +52,24 @@
     let products = [];
     const SERVER_URL = 'https://shop-test-zcei.onrender.com';
 
-    // Завантаження даних
+    // ФУНКЦІЯ: Завантаження товарів
     async function loadData() {
-        const pass = document.getElementById('admin-pass').value;
-        if(!pass) return alert("Введіть пароль");
         try {
             const res = await fetch('products.json?v=' + Date.now());
             products = await res.json();
             document.getElementById('auth-block').style.display = 'none';
             document.getElementById('admin-content').style.display = 'block';
             renderTable();
-        } catch (e) { alert("Помилка завантаження JSON"); }
+        } catch (e) { alert("Помилка"); }
     }
 
-    // Відображення таблиці
+    // ФУНКЦІЯ: Побудова таблиці в адмінці
     function renderTable() {
         const tbody = document.getElementById('table-body');
         tbody.innerHTML = products.map(p => `
             <tr>
-                <td><b>${p.name}</b></td>
-                <td>${p.stock} шт</td>
+                <td>${p.name}</td>
+                <td>${p.stock}</td>
                 <td>
                     <button class="btn edit-btn" onclick="editForm(${p.id})">⚙️</button>
                     <button class="btn del-btn" onclick="deleteProduct(${p.id})">🗑️</button>
@@ -87,10 +78,9 @@
         `).join('');
     }
 
-    // Редагування
+    // ФУНКЦІЯ: Редагування товару
     function editForm(id) {
         const p = products.find(x => x.id == id);
-        if (!p) return;
         document.getElementById('p-id').value = p.id;
         document.getElementById('p-name').value = p.name;
         document.getElementById('p-price').value = p.price;
@@ -98,10 +88,10 @@
         document.getElementById('p-category').value = p.category;
         document.getElementById('p-image').value = p.image || "";
         document.getElementById('p-desc').value = p.description || "";
-        window.scrollTo({top: 0, behavior: 'smooth'});
+        window.scrollTo(0,0);
     }
 
-    // Збереження
+    // ФУНКЦІЯ: Збереження або додавання нового
     async function saveProduct() {
         const id = document.getElementById('p-id').value;
         const newP = {
@@ -113,7 +103,6 @@
             image: document.getElementById('p-image').value,
             description: document.getElementById('p-desc').value
         };
-
         if (id) {
             const idx = products.findIndex(x => x.id == id);
             products[idx] = newP;
@@ -123,36 +112,22 @@
         await sync();
     }
 
-    // Видалення
+    // ФУНКЦІЯ: Видалення товару
     async function deleteProduct(id) {
-        if (!confirm("Видалити цей товар?")) return;
+        if (!confirm("Видалити?")) return;
         products = products.filter(x => x.id != id);
         await sync();
     }
 
-    // Синхронізація
+    // ФУНКЦІЯ: Відправка даних на Render
     async function sync() {
         const pass = document.getElementById('admin-pass').value;
-        try {
-            const res = await fetch(`${SERVER_URL}/api/admin/save`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password: pass, filename: 'products.json', data: products })
-            });
-            if (res.ok) {
-                alert("✅ Дані оновлено на GitHub!");
-                resetForm();
-                loadData();
-            } else {
-                const err = await res.json();
-                alert("❌ Помилка: " + (err.error || "Невідомо"));
-            }
-        } catch (e) { alert("❌ Сервер Render не відповідає"); }
-    }
-
-    function resetForm() {
-        document.getElementById('p-id').value = "";
-        document.querySelectorAll('#admin-content input, textarea').forEach(i => i.value = "");
+        const res = await fetch(`${SERVER_URL}/api/admin/save`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pass, filename: 'products.json', data: products })
+        });
+        if (res.ok) { alert("Оновлено!"); loadData(); } else { alert("Помилка збереження!"); }
     }
 </script>
 </body>

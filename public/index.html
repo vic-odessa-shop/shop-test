@@ -2,72 +2,37 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vic Odessa Shop</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root { --main-blue: #0088cc; --bg-color: #f2f2f7; }
-        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg-color); margin: 0; padding-bottom: 120px; }
-
-        header {
-            background: white; padding: 15px 0; position: sticky; top: 0; z-index: 100;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05); text-align: center;
-        }
-
-        #main-title { font-size: 20px; color: var(--main-blue); cursor: pointer; margin: 0; user-select: none; }
-
+        body { font-family: sans-serif; background: var(--bg-color); margin: 0; padding-bottom: 120px; }
+        header { background: white; padding: 15px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.05); text-align: center; }
+        #main-title { font-size: 20px; color: var(--main-blue); cursor: pointer; margin: 0; }
         .categories { display: flex; overflow-x: auto; justify-content: center; padding: 10px; gap: 8px; }
-        .cat-btn { background: #ebebeb; border: none; padding: 8px 15px; border-radius: 20px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+        .cat-btn { background: #ebebeb; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; }
         .cat-btn.active { background: var(--main-blue); color: white; }
 
-        /* ИСПРАВЛЕННАЯ СЕТКА */
+        /* Адаптивна сітка товарів */
         .products-grid {
-            display: grid;
-            gap: 15px;
-            padding: 15px;
+            display: grid; gap: 15px; padding: 15px;
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            max-width: 1000px;
-            margin: 0 auto;
+            max-width: 1000px; margin: 0 auto;
         }
-
-        .product-card {
-            background: white; border-radius: 15px; padding: 10px;
-            display: flex; flex-direction: column;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-        }
-
-        .product-card img {
-            width: 100%; height: 140px; object-fit: cover;
-            border-radius: 10px; cursor: pointer; background: #f0f0f0;
-        }
-
-        .info-btn {
-            background: #f0f0f0; border: none; color: #666; width: 24px; height: 24px;
-            border-radius: 50%; font-size: 12px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; font-weight: bold;
-        }
+        .product-card { background: white; border-radius: 15px; padding: 10px; display: flex; flex-direction: column; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+        .product-card img { width: 100%; height: 140px; object-fit: cover; border-radius: 10px; background: #ddd; }
 
         .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 10px; }
-        .price { font-weight: 800; font-size: 16px; }
+        .price { font-weight: bold; }
+        .add-btn { background: var(--main-blue); color: white; border: none; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-weight: bold; }
 
-        .add-btn { background: var(--main-blue); color: white; border: none; width: 34px; height: 34px; border-radius: 50%; font-weight: bold; cursor: pointer; }
-
-        .counter { display: flex; align-items: center; background: #f0f0f0; border-radius: 15px; padding: 2px; }
-        .counter button { background: white; border: none; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer; }
-        .counter span { min-width: 25px; text-align: center; font-weight: bold; }
-
-        #order-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 450px; z-index: 1000; display: none; }
-        #customer-info { display: none; background: white; padding: 15px; margin-bottom: 10px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        #customer-info input { width: 100%; padding: 12px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 16px; outline: none; }
-
-        #order-bar {
-            background: var(--main-blue); color: white; padding: 18px; border-radius: 20px;
-            text-align: center; font-weight: bold; cursor: pointer;
-        }
-
+        /* Кошик та модальне вікно */
+        #order-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 450px; display: none; }
+        #customer-info { background: white; padding: 15px; border-radius: 20px; margin-bottom: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        #order-bar { background: var(--main-blue); color: white; padding: 15px; border-radius: 20px; text-align: center; cursor: pointer; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000; }
-        .modal-content { background: white; padding: 25px; border-radius: 20px; width: 85%; max-width: 400px; position: relative; }
-        .close-modal { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; }
+        .modal-content { background: white; padding: 25px; border-radius: 20px; width: 80%; max-width: 400px; position: relative; }
     </style>
 </head>
 <body>
@@ -77,108 +42,74 @@
     <div class="categories">
         <button class="cat-btn active" onclick="filterItems('all', this)">Все</button>
         <button class="cat-btn" onclick="filterItems('Піца', this)">Піца</button>
-        <button class="cat-btn" onclick="filterItems('Бургеры', this)">Бургеры</button>
-        <button class="cat-btn" onclick="filterItems('Напитки', this)">Напитки</button>
+        <button class="cat-btn" onclick="filterItems('Бургеры', this)">Бургери</button>
+        <button class="cat-btn" onclick="filterItems('Напитки', this)">Напої</button>
     </div>
 </header>
 
 <main class="products-grid" id="container"></main>
 
 <div id="order-container">
-    <div id="customer-info">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <h4 style="margin: 0;">Контактні дані:</h4>
-            <span onclick="resetOrderInterface()" style="color: #ff3b30; cursor: pointer; font-size: 14px; font-weight: bold;">Скасувати</span>
-        </div>
-        <input type="text" id="cust-name" placeholder="Ваше ім'я">
-        <input type="tel" id="cust-phone" placeholder="Номер телефону">
+    <div id="customer-info" style="display: none;">
+        <input type="text" id="cust-name" placeholder="Ваше ім'я" style="width:100%; padding:10px; margin-bottom:5px;">
+        <input type="tel" id="cust-phone" placeholder="Телефон" style="width:100%; padding:10px;">
     </div>
     <div id="order-bar" onclick="handleOrderClick()">
-        <span id="order-btn-text">Замовити:</span> <span id="total-price">0</span> грн
+        <span id="order-btn-text">Замовити</span>: <span id="total-price">0</span> грн
     </div>
 </div>
 
-<div id="desc-modal" class="modal">
-    <div class="modal-content">
-        <span class="close-modal" onclick="closeDesc()">&times;</span>
+<div id="desc-modal" class="modal" onclick="closeDesc()">
+    <div class="modal-content" onclick="event.stopPropagation()">
         <h3 id="modal-title"></h3>
-        <div id="modal-body" style="line-height: 1.5; color: #444;"></div>
+        <p id="modal-body"></p>
+        <button onclick="closeDesc()" style="width:100%; padding:10px;">Закрити</button>
     </div>
 </div>
 
 <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-
-    // Прямой URL твоего сервера
     const API_URL = 'https://shop-test-zcei.onrender.com/api/send-order';
-
     let allProducts = [];
     let cart = {};
-    let isFieldsVisible = false;
 
-    // Тайный вход (5 кликов)
-    let titleClicks = 0;
-    let clickTimer;
-    document.getElementById('main-title').addEventListener('click', () => {
-        titleClicks++;
-        clearTimeout(clickTimer);
-        clickTimer = setTimeout(() => titleClicks = 0, 3000);
-        if (titleClicks === 5) window.location.href = 'admin.html';
-    });
-
-    // Загрузка товаров
+    // ФУНКЦІЯ: Завантаження товарів з файлу products.json
     async function init() {
         try {
             const res = await fetch('products.json?v=' + Date.now());
             allProducts = await res.json();
             render(allProducts);
-        } catch (e) { console.error("Load error"); }
+        } catch (e) { console.error("Помилка завантаження"); }
     }
 
+    // ФУНКЦІЯ: Відображення карток товарів
     function render(items) {
         const container = document.getElementById('container');
         container.innerHTML = items.map(p => {
             const qty = cart[p.id] || 0;
-            const imgPath = p.image || 'img/no-photo.png';
+            // Якщо картинки немає, onerror прибирає src, щоб не було циклу помилок
             return `
             <div class="product-card">
-                <img src="${imgPath}" onerror="this.src='https://via.placeholder.com/150?text=No+Photo'"
-                     onclick="showDesc(${p.id})">
-                <div style="display: flex; justify-content: space-between; margin: 10px 0;">
-                    <h3 style="font-size:14px; margin:0;">${p.name}</h3>
-                    <button class="info-btn" onclick="showDesc(${p.id})">і</button>
-                </div>
+                <img src="${p.image || ''}" onerror="this.style.display='none'; this.parentElement.style.background='#eee'">
+                <h3 style="font-size:14px; margin:10px 0 5px;">${p.name}
+                    <button onclick="showDesc(${p.id})" style="border:none; background:none; color:blue; cursor:pointer;">(і)</button>
+                </h3>
                 <div class="card-footer">
                     <div class="price">${p.price} грн</div>
-                    ${qty > 0 ? `
-                        <div class="counter">
-                            <button onclick="changeQty(${p.id}, -1)">-</button>
-                            <span>${qty}</span>
-                            <button onclick="changeQty(${p.id}, 1)">+</button>
-                        </div>
-                    ` : `
-                        <button class="add-btn" onclick="changeQty(${p.id}, 1)">+</button>
-                    `}
+                    <button class="add-btn" onclick="changeQty(${p.id}, 1)">${qty > 0 ? qty : '+'}</button>
                 </div>
             </div>`;
         }).join('');
         updateOrderBar();
     }
 
+    // ФУНКЦІЯ: Зміна кількості в кошику
     function changeQty(id, delta) {
-        const p = allProducts.find(x => x.id == id);
-        if (!p) return;
-        let cur = cart[id] || 0;
-        if (delta > 0 && p.stock !== undefined && cur >= p.stock) {
-            alert(`На складі лише ${p.stock} шт.`);
-            return;
-        }
-        cart[id] = cur + delta;
+        cart[id] = (cart[id] || 0) + delta;
         if (cart[id] <= 0) delete cart[id];
         render(allProducts);
     }
 
+    // ФУНКЦІЯ: Оновлення суми замовлення
     function updateOrderBar() {
         let total = 0;
         Object.keys(cart).forEach(id => {
@@ -189,65 +120,48 @@
         document.getElementById('total-price').innerText = total;
     }
 
-    function resetOrderInterface() {
-        isFieldsVisible = false;
-        document.getElementById('customer-info').style.display = 'none';
-        document.getElementById('order-btn-text').innerText = 'Замовити:';
-    }
-
+    // ФУНКЦІЯ: Обробка кнопки замовлення
     function handleOrderClick() {
-        if (!isFieldsVisible) {
-            document.getElementById('customer-info').style.display = 'block';
+        const info = document.getElementById('customer-info');
+        if (info.style.display === 'none') {
+            info.style.display = 'block';
             document.getElementById('order-btn-text').innerText = 'ПІДТВЕРДИТИ';
-            isFieldsVisible = true;
         } else {
             sendOrder();
         }
     }
 
+    // ФУНКЦІЯ: Відправка замовлення на сервер
     async function sendOrder() {
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('cust-phone').value;
         if (!name || !phone) return alert("Заповніть дані!");
 
-        let text = `👤 <b>Замовлення!</b>\nКлієнт: ${name}\nТел: ${phone}\n\n`;
-        Object.keys(cart).forEach(id => {
-            const p = allProducts.find(x => x.id == id);
-            text += `• ${p.name} x ${cart[id]}\n`;
-        });
-
+        const orderText = `Замовлення від ${name} (${phone})`;
         try {
             const res = await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ order: text, cart: cart })
+                body: JSON.stringify({ order: orderText, cart: cart })
             });
-            if (res.ok) {
-                alert("Успішно!");
-                cart = {};
-                resetOrderInterface();
-                render(allProducts);
-            }
+            if (res.ok) { alert("Дякуємо!"); location.reload(); }
         } catch (e) { alert("Помилка зв'язку"); }
     }
 
+    // ФУНКЦІЯ: Фільтрація за категоріями
     function filterItems(cat, btn) {
         document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         render(cat === 'all' ? allProducts : allProducts.filter(p => p.category === cat));
     }
 
+    // ФУНКЦІЯ: Показ опису товару
     function showDesc(id) {
         const p = allProducts.find(x => x.id == id);
-        if (!p) return;
         document.getElementById('modal-title').innerText = p.name;
-        document.getElementById('modal-body').innerHTML = `
-            <p>${p.description || 'Опис відсутній'}</p>
-            <p><b>Залишок:</b> ${p.stock || 0} шт.</p>
-        `;
+        document.getElementById('modal-body').innerText = p.description || "Опис відсутній";
         document.getElementById('desc-modal').style.display = 'flex';
     }
-
     function closeDesc() { document.getElementById('desc-modal').style.display = 'none'; }
 
     init();
