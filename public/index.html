@@ -168,7 +168,12 @@
             const qty = cart[p.id] || 0;
             return `
             <div class="product-card">
-                <img src="${p.image || ''}" onclick="showDesc('${p.name}', '${p.description || ''}', ${p.stock})" alt="${p.name}">
+     //           <img src="${p.image || ''}" onclick="showDesc('${p.name}', '${p.description || ''}', ${p.stock})" alt="${p.name}">
+
+                    <img src="${p.image || 'img/no-photo.png'}"
+                     onerror="this.src='https://via.placeholder.com/150?text=VIC+ODESSA'"
+                     onclick="showDesc('${p.name}', '${p.description || ''}', ${p.stock})"
+                     alt="${p.name}">
 
                 <div style="display: flex; align-items: flex-start; justify-content: space-between; margin: 10px 0;">
                     <h3 style="font-size:14px; margin:0; line-height:1.2; padding-right:5px;">${p.name}</h3>
