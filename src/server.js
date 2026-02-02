@@ -7,28 +7,51 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Переменные окружения
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN?.replace(/\s/g, '');
 const GITHUB_REPO = process.env.GITHUB_REPO?.trim();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD?.trim();
 const TG_TOKEN = process.env.BOT_TOKEN;
 const CHAT_ID = process.env.TARGET_CHAT_ID;
 
-// Просто чтобы по ссылке Render не было "Cannot GET"
-app.get('/', (req, res) => res.send('✅ Server is running...'));
+// Хранилище для защиты от дублей
+let lastOrders = new Map();
 
-// Отправка заказов
+app.get('/', (req, res) => res.send('🚀 VIC ODESSA Server is Active'));
+
+// ОТПРАВКА ЗАКАЗА С ЗАЩИТОЙ
 app.post('/api/send-order', async (req, res) => {
     const { order, total } = req.body;
+
+    // Создаем уникальный ключ заказа (текст + сумма)
+    const orderKey = `${order}_${total}`;
+    const now = Date.now();
+
+    // Если такой заказ уже был в последние 40 секунд — игнорируем
+    if (lastOrders.has(orderKey) && (now - lastOrders.get(orderKey) < 40000)) {
+        console.log("🚫 Заблокирован дубль заказа");
+        return res.json({ success: true, message: "Duplicate ignored" });
+    }
+
+    // Запоминаем текущий заказ
+    lastOrders.set(orderKey, now);
+
     const message = `<b>🔔 НОВИЙ ЗАКАЗ!</b>\n\n${order}\n\n<b>СУМА: ${total} ₴</b>`;
+
     try {
         await axios.post(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
-            chat_id: CHAT_ID, text: message, parse_mode: 'HTML'
+            chat_id: CHAT_ID,
+            text: message,
+            parse_mode: 'HTML'
         });
         res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+        console.error("TG Error:", e.message);
+        res.status(500).json({ error: e.message });
+    }
 });
 
-// Админка
+// АДМИНКА (без изменений)
 app.post('/api/admin/save', async (req, res) => {
     const { password, data, filename } = req.body;
     if (password?.toString() !== ADMIN_PASSWORD) return res.status(403).json({ error: 'Pass error' });
