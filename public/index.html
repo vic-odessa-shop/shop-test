@@ -103,7 +103,7 @@
     }
 
     // --- ИНЖЕНЕРНЫЙ АЛГОРИТМ ОТПРАВКИ ---
-    async function executeOrderAlgorithm() {
+   async function executeOrderAlgorithm() {
         if (isSending) return;
         const name = document.getElementById('cust-name').value.trim();
         const phone = document.getElementById('cust-phone').value.trim();
@@ -121,49 +121,45 @@
                 const check = await fetch(API_URL + '/', { mode: 'cors', cache: 'no-cache' });
                 if (check.ok) ready = true;
             } catch (e) { console.log("Чекаємо..."); }
-            if (!ready) { attempts++; await new Promise(r => setTimeout(r, 2500)); }
+            if (!ready) { attempts++; await new Promise(r => setTimeout(r, 2000)); }
         }
 
-        // 2. Пауза стабилизации
-        btn.innerText = "ПІДГОТОВКА...";
-        await new Promise(r => setTimeout(r, 1500));
-
-        // 3. Формирование пакета
+        // 2. Формування даних
+        btn.innerText = "ОБРОБКА...";
         let itemsText = ""; let sum = 0;
         for (let n in cart) {
             itemsText += `\n• ${n} (${cart[n]} шт.)`;
             const p = allProducts.find(x => x.name === n); if(p) sum += p.price * cart[n];
         }
 
-        // 4. Передача
-       // 4. Передача (Тактика "Вистрілив і забув")
+        // 3. Відправка (Чекаємо фізичного виходу пакета, але ігноруємо помилку відповіді)
         btn.innerText = "ВІДПРАВКА...";
+        try {
+            await fetch(API_URL + '/api/send-order', {
+                method: 'POST',
+                mode: 'cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    order: `👤 Клієнт: ${name}\n📞 Тел: ${phone}\n🆔 ID: ${tg?.initDataUnsafe?.user?.id || 'PC-USER'} (@${tg?.initDataUnsafe?.user?.username || '-'}) \n🛒 Товари:${itemsText}`,
+                    total: sum
+                })
+            });
+        } catch (e) {
+            console.log("Пакет пішов, але сервер не встиг відповісти");
+        }
 
-        // Формируем запрос
-        fetch(API_URL + '/api/send-order', {
-            method: 'POST',
-            mode: 'cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                order: `👤 Клієнт: ${name}\n📞 Тел: ${phone}\n🆔 ID: ${tg?.initDataUnsafe?.user?.id || 'PC-USER'} (@${tg?.initDataUnsafe?.user?.username || '-'}) \n🛒 Товари:${itemsText}`,
-                total: sum
-            })
-        }).catch(e => console.log("Браузер знову ворчить, але пакет уже пішов"));
+        // 4. ФІНАЛ (Виконується завжди)
+        btn.innerText = "ГОТОВО!";
 
-        // НЕ ЖДЕМ ОТВЕТА (await res.ok) — СРАЗУ ПОКАЗЫВАЕМ УСПЕХ
-        // Даем 1 секунду задержки для солидности
-        await new Promise(r => setTimeout(r, 1000));
-
-        if (tg) {
+        if (tg && tg.showPopup) {
             tg.showPopup({
                 title: 'Замовлення прийнято!',
-                message: 'Ми вже готуємо ваш чек. Дякуємо!',
-                buttons: [{type: 'ok'}]
+                message: 'Ми зв\'яжемося з вами найближчим часом.',
+                buttons: [{type: 'ok', text: 'Зрозуміло'}]
             }, () => tg.close());
         } else {
-            // Для ПК
             alert("Дякуємо! Ваше замовлення прийнято.");
-            location.reload(); // Очищаем корзину перезагрузкой
+            location.reload();
         }
     }
 
