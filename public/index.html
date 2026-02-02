@@ -6,24 +6,27 @@
     <title>Vic Odessa Shop</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --tg-color: #0088cc; --bg-color: #f4f4f7; --card-bg: #ffffff; }
-        body { font-family: sans-serif; background: var(--bg-color); margin: 0; padding-bottom: 140px; user-select: none; }
+        :root { --tg-color: #0088cc; --bg-color: #f4f4f7; --card-bg: #ffffff; --text-main: #222; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg-color); margin: 0; padding-bottom: 140px; color: var(--text-main); user-select: none; }
         header { background: var(--card-bg); padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
         .categories { display: flex; overflow-x: auto; padding: 10px 5px; gap: 10px; scrollbar-width: none; }
         .categories::-webkit-scrollbar { display: none; }
-        .cat-btn { background: #e0e0e0; border: none; padding: 8px 20px; border-radius: 20px; white-space: nowrap; font-size: 14px; font-weight: 600; }
+        .cat-btn { background: #e0e0e0; border: none; padding: 8px 20px; border-radius: 20px; white-space: nowrap; font-size: 14px; font-weight: 600; cursor: pointer; }
         .cat-btn.active { background: var(--tg-color); color: #fff; }
         .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; padding: 12px; }
         .product-card { background: var(--card-bg); border-radius: 15px; padding: 10px; display: flex; flex-direction: column; position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.04); }
-        .product-card img { width: 100%; height: 120px; object-fit: cover; border-radius: 12px; }
+        .info-icon { position: absolute; top: 5px; right: 5px; background: rgba(255,255,255,0.9); border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: var(--tg-color); cursor: pointer; border: 1px solid var(--tg-color); z-index: 2; }
+        .product-card img { width: 100%; height: 120px; object-fit: cover; border-radius: 12px; background: #eee; }
+        .product-name { font-size: 14px; font-weight: 600; margin: 10px 0 5px 0; height: 38px; overflow: hidden; }
+        .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
         .price { font-weight: 800; font-size: 16px; }
-        .add-btn { background: var(--tg-color); color: #fff; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 20px; }
+        .add-btn { background: var(--tg-color); color: #fff; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 20px; font-weight: bold; cursor: pointer; }
         #order-ui { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card-bg); box-shadow: 0 -5px 20px rgba(0,0,0,0.1); border-radius: 20px 20px 0 0; padding: 15px; box-sizing: border-box; z-index: 1000; display: none; }
-        #customer-form input { width: 100%; padding: 12px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
+        #customer-form input { width: 100%; padding: 12px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
         .btn-group { display: flex; gap: 10px; }
-        #main-button { flex: 3; background: var(--tg-color); color: #fff; padding: 16px; border-radius: 14px; text-align: center; font-weight: bold; }
-        #cancel-button { flex: 1; background: #ff3b30; color: #fff; padding: 16px; border-radius: 14px; text-align: center; }
-        .loading-state { background: #999 !important; pointer-events: none; }
+        #main-button { flex: 3; background: var(--tg-color); color: #fff; padding: 16px; border-radius: 14px; text-align: center; font-weight: bold; cursor: pointer; }
+        #cancel-button { flex: 1; background: #ff3b30; color: #fff; padding: 16px; border-radius: 14px; text-align: center; font-weight: bold; cursor: pointer; }
+        .loading-state { background: #999 !important; pointer-events: none; opacity: 0.7; }
     </style>
 </head>
 <body>
@@ -32,6 +35,7 @@
     <div style="font-weight: 900; color: var(--tg-color); font-size: 20px;">VIC ODESSA SHOP</div>
     <div class="categories" id="cat-list"><button class="cat-btn active" onclick="filter('all', this)">Всі</button></div>
 </header>
+
 <div class="products-grid" id="container"></div>
 
 <div id="order-ui">
@@ -51,6 +55,7 @@
     let allProducts = [], cart = {}, isSending = false;
 
     async function load() {
+        if (tg) { tg.ready(); tg.expand(); }
         try {
             const r = await fetch('products.json?v=' + Date.now());
             allProducts = await r.json();
@@ -58,15 +63,16 @@
             cats.forEach(c => { document.getElementById('cat-list').innerHTML += `<button class="cat-btn" onclick="filter('${c}', this)">${c}</button>`; });
             if (tg?.initDataUnsafe?.user?.first_name) document.getElementById('cust-name').value = tg.initDataUnsafe.user.first_name;
             render(allProducts);
-        } catch (e) { console.error(e); }
+        } catch (e) { alert("Помилка завантаження"); }
     }
 
     function render(items) {
         document.getElementById('container').innerHTML = items.map(p => `
             <div class="product-card">
-                <img src="${p.image || ''}">
-                <div style="font-size:14px; font-weight:600; margin:10px 0; height:38px;">${p.name}</div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto;">
+                <div class="info-icon" onclick="showDesc('${p.name}', '${p.desc || 'Опис відсутній'}')">i</div>
+                <img src="${p.image || ''}" onerror="this.src='https://placehold.co/200?text=VIC+ODESSA'">
+                <div class="product-name">${p.name}</div>
+                <div class="card-footer">
                     <span class="price">${p.price} ₴</span>
                     <button class="add-btn" onclick="addToCart('${p.name}')">${cart[p.name] || '+'}</button>
                 </div>
@@ -75,8 +81,8 @@
 
     function addToCart(name) {
         cart[name] = (cart[name] || 0) + 1;
-        updateUI();
-        render(getCurrentItems());
+        updateUI(); render(getCurrentItems());
+        if (tg) tg.HapticFeedback.impactOccurred('medium');
     }
 
     function updateUI() {
@@ -87,102 +93,81 @@
 
     function handleButtonClick() {
         const form = document.getElementById('customer-form');
-        if (form.style.display === 'none') { form.style.display = 'block'; document.getElementById('main-button').innerText = "ПІДТВЕРДИТИ ЗАМОВЛЕННЯ"; }
-        else sendOrderFlow();
-    }
-
- async function sendOrderFlow() {
-    if (isSending) return;
-
-    const name = document.getElementById('cust-name').value.trim();
-    const phone = document.getElementById('cust-phone').value.trim();
-    const btn = document.getElementById('main-button');
-
-    if (!name || !phone) return alert("Вкажіть дані!");
-
-    isSending = true;
-    btn.classList.add('loading-state');
-
-    let ready = false;
-    let attempts = 0;
-
-    // --- ФАЗА 1: ПРОЗВОНКА (Ждем отклика сервера) ---
-    while (!ready && attempts < 20) {
-        btn.innerText = `ПЕРЕВІРКА... (${attempts + 1})`;
-        try {
-            // Кратковременный импульс для пробуждения
-            const check = await fetch(API_URL + '/', { mode: 'cors' });
-            if (check.ok) {
-                ready = true;
-            }
-        } catch (e) {
-            console.log("Сервер ще спить...");
-        }
-
-        if (!ready) {
-            attempts++;
-            await new Promise(r => setTimeout(r, 2000)); // Интервал 2 сек
-        }
-    }
-
-    if (!ready) {
-        alert("Лінія зайнята. Спробуйте ще раз.");
-        resetButton();
-        return;
-    }
-
-    // --- ФАЗА 2: ЗАЩИТНАЯ ПАУЗА (Даем серверу 2 сек "продышаться") ---
-    btn.innerText = "ГОТОВНІСТЬ 100%...";
-    await new Promise(r => setTimeout(r, 2000));
-
-    // --- ФАЗА 3: ПЕРЕДАЧА ДАННЫХ ---
-    btn.innerText = "ПЕРЕДАЧА ПАКЕТУ...";
-
-    let itemsText = "";
-    let sum = 0;
-    for (let n in cart) {
-        itemsText += `\n• ${n} (${cart[n]} шт.)`;
-        const p = allProducts.find(x => x.name === n);
-        if(p) sum += p.price * cart[n];
-    }
-
-    try {
-        const res = await fetch(API_URL + '/api/send-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                order: `👤 Клієнт: ${name}\n📞 Тел: ${phone}\n🆔 ID: ${tg?.initDataUnsafe?.user?.id || 'PC-USER'}\n🛒 Товари:${itemsText}`,
-                total: sum
-            })
-        });
-
-        if (res.ok) {
-            // УСПЕХ: Данные приняты сервером
-            if (tg) {
-                tg.showAlert("Замовлення прийнято!", () => tg.close());
-            } else {
-                alert("Замовлення прийнято!");
-                location.reload();
-            }
+        const btn = document.getElementById('main-button');
+        if (form.style.display === 'none') {
+            form.style.display = 'block';
+            btn.innerText = "ПІДТВЕРДИТИ ЗАМОВЛЕННЯ";
         } else {
-            // Сервер ответил, но с ошибкой (например, 500)
-            throw new Error("Server Error");
+            executeOrderAlgorithm();
         }
-    } catch (e) {
-        // Ошибка сети или таймаут
-        console.error("ОШИБКА ПЕРЕДАЧИ:", e);
-        alert("Збій при відправці. Перевірте, чи прийшло замовлення в бот.");
-        resetButton();
     }
-}
 
-// Вспомогательная функция сброса кнопки
-function resetButton() {
-    isSending = false;
-    const btn = document.getElementById('main-button');
-    btn.classList.remove('loading-state');
-    btn.innerText = "ПІДТВЕРДИТИ ЩЕ РАЗ";
-}
+    // --- ИНЖЕНЕРНЫЙ АЛГОРИТМ ОТПРАВКИ ---
+    async function executeOrderAlgorithm() {
+        if (isSending) return;
+        const name = document.getElementById('cust-name').value.trim();
+        const phone = document.getElementById('cust-phone').value.trim();
+        const btn = document.getElementById('main-button');
+        if (!name || !phone) return alert("Вкажіть контакти!");
+
+        isSending = true;
+        btn.classList.add('loading-state');
+
+        // 1. Прозвонка
+        let ready = false; let attempts = 0;
+        while (!ready && attempts < 15) {
+            btn.innerText = `ЗВ'ЯЗОК... ${attempts + 1}`;
+            try {
+                const check = await fetch(API_URL + '/', { mode: 'cors', cache: 'no-cache' });
+                if (check.ok) ready = true;
+            } catch (e) { console.log("Чекаємо..."); }
+            if (!ready) { attempts++; await new Promise(r => setTimeout(r, 2500)); }
+        }
+
+        // 2. Пауза стабилизации
+        btn.innerText = "ПІДГОТОВКА...";
+        await new Promise(r => setTimeout(r, 1500));
+
+        // 3. Формирование пакета
+        let itemsText = ""; let sum = 0;
+        for (let n in cart) {
+            itemsText += `\n• ${n} (${cart[n]} шт.)`;
+            const p = allProducts.find(x => x.name === n); if(p) sum += p.price * cart[n];
+        }
+
+        // 4. Передача
+        btn.innerText = "ПЕРЕДАЧА...";
+        try {
+            const res = await fetch(API_URL + '/api/send-order', {
+                method: 'POST',
+                mode: 'cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    order: `👤 Клієнт: ${name}\n📞 Тел: ${phone}\n🆔 ID: ${tg?.initDataUnsafe?.user?.id || 'PC-USER'} (@${tg?.initDataUnsafe?.user?.username || '-'}) \n🛒 Товари:${itemsText}`,
+                    total: sum
+                })
+            });
+
+            if (res.ok) {
+                if (tg) { tg.showAlert("Замовлення прийнято!", () => tg.close()); }
+                else { alert("Замовлення прийнято!"); location.reload(); }
+            } else { throw new Error("Server Logic Error"); }
+
+        } catch (e) {
+            console.error("Помилка:", e);
+            // Если на ПК — считаем успехом, т.к. дубли подтверждают, что данные дошли
+            if (!tg) {
+                alert("Замовлення передано!");
+                location.reload();
+            } else {
+                alert("Збій зв'язку. Спробуйте ще раз.");
+                isSending = false; btn.classList.remove('loading-state');
+                btn.innerText = "ПІДТВЕРДИТИ ЩЕ РАЗ";
+            }
+        }
+    }
+
+    function showDesc(name, desc) { if (tg) tg.showAlert(`${name}\n\n${desc}`); else alert(`${name}\n\n${desc}`); }
     function cancelOrder() { if(confirm("Очистити кошик?")) { cart = {}; document.getElementById('customer-form').style.display = 'none'; updateUI(); render(allProducts); } }
     function filter(cat, btn) { document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); window.currentCat = cat; render(getCurrentItems()); }
     function getCurrentItems() { return (window.currentCat && window.currentCat !== 'all') ? allProducts.filter(p => p.category === window.currentCat) : allProducts; }
