@@ -7,43 +7,37 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Загрузка настроек
+// Синхронизация с твоими именами на Render
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN ? process.env.GITHUB_TOKEN.replace(/\s/g, '') : '';
 const GITHUB_REPO = process.env.GITHUB_REPO ? process.env.GITHUB_REPO.trim() : '';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ? process.env.ADMIN_PASSWORD.trim() : '';
-const TG_TOKEN = process.env.TELEGRAM_TOKEN;
-const CHAT_ID = process.env.TARGET_CHAT_ID || process.env.CHAT_ID;
+const TG_TOKEN = process.env.BOT_TOKEN; // Твое имя на Render
+const CHAT_ID = process.env.TARGET_CHAT_ID; // Твое имя на Render
 
-// --- ПУТЬ ДЛЯ ЗАКАЗОВ (Исправляет 404) ---
 app.post('/api/send-order', async (req, res) => {
     const { order, cart } = req.body;
 
-    // Формируем текст для Telegram
-    let message = `<b>🔔 НОВЫЙ ЗАКАЗ!</b>\n\n${order}\n\n<b>Состав:</b>\n`;
-    // Мы не знаем названий из корзины (там только ID),
-    // поэтому просто выведем структуру, пока ты не настроишь передачу имен.
-    message += `<pre>${JSON.stringify(cart, null, 2)}</pre>`;
+    // Формируем красивый текст
+    const message = `<b>🔔 НОВЫЙ ЗАКАЗ!</b>\n\n${order}\n\n<i>Проверьте админку для деталей.</i>`;
 
     try {
-        // Отправка в телеграм
         if (TG_TOKEN && CHAT_ID) {
-            const tgUrl = `https://api.telegram.org/bot${TG_TOKEN}/sendMessage`;
-            await axios.post(tgUrl, {
+            await axios.post(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
                 chat_id: CHAT_ID,
                 text: message,
                 parse_mode: 'HTML'
             });
+            console.log('✅ Отправлено в TG');
+        } else {
+            console.error('❌ Ошибка: BOT_TOKEN или TARGET_CHAT_ID не найдены');
         }
-
-        console.log('✅ Заказ отправлен в TG');
         res.json({ success: true });
     } catch (e) {
-        console.error('❌ Ошибка заказа:', e.message);
-        res.status(500).json({ error: 'Ошибка при отправке заказа' });
+        console.error('❌ Ошибка TG API:', e.response?.data || e.message);
+        res.status(500).json({ error: 'Ошибка отправки в Telegram' });
     }
 });
 
-// --- ПУТЬ ДЛЯ АДМИНКИ (Работающий) ---
 app.post('/api/admin/save', async (req, res) => {
     const { password, data, filename } = req.body;
     if (password?.toString() !== ADMIN_PASSWORD) {
@@ -60,9 +54,9 @@ app.post('/api/admin/save', async (req, res) => {
         }, { headers });
         res.json({ success: true });
     } catch (e) {
-        res.status(500).json({ error: `GitHub API: ${e.message}` });
+        res.status(500).json({ error: e.message });
     }
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server live. ChatID: ${CHAT_ID ? 'OK' : 'ERR'}`));
