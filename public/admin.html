@@ -5,22 +5,21 @@
     <title>Адмін-панель</title>
     <style>
         body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; max-width: 800px; margin: 0 auto 20px; }
-        input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; max-width: 600px; margin: 0 auto 20px; }
+        input, textarea, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         table { width: 100%; border-collapse: collapse; background: white; max-width: 800px; margin: 0 auto; }
         th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
         .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .save-btn { background: #28a745; color: white; width: 100%; margin-top: 10px; }
-        .edit-btn { background: #0088cc; color: white; }
+        .edit-btn { background: #0088cc; color: white; margin-right: 5px; }
         .del-btn { background: #ff3b30; color: white; }
-        .img-pre { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; }
     </style>
 </head>
 <body>
 
 <div class="card" id="auth-block">
-    <h3>🔑 Вхід</h3>
-    <input type="password" id="admin-pass" placeholder="Пароль">
+    <h3>🔐 Вхід до системи</h3>
+    <input type="password" id="admin-pass" placeholder="Введіть пароль">
     <button onclick="loadData()" class="btn save-btn">Увійти</button>
 </div>
 
@@ -28,9 +27,9 @@
     <div class="card">
         <h3>📦 Редактор товару</h3>
         <input type="hidden" id="p-id">
-        <input type="text" id="p-name" placeholder="Назва">
+        <input type="text" id="p-name" placeholder="Назва товару">
         <div style="display: flex; gap: 10px;">
-            <input type="number" id="p-price" placeholder="Ціна">
+            <input type="number" id="p-price" placeholder="Ціна (грн)">
             <input type="number" id="p-stock" placeholder="Склад (шт)">
         </div>
         <select id="p-category">
@@ -38,16 +37,15 @@
             <option value="Бургеры">Бургеры</option>
             <option value="Напитки">Напитки</option>
         </select>
-        <input type="text" id="p-image" placeholder="Шлях до картинки (напр. img/1.jpg)">
-        <textarea id="p-desc" placeholder="Опис товару (description)"></textarea>
+        <input type="text" id="p-image" placeholder="Шлях до картинки (напр. img/pizza.jpg)">
+        <textarea id="p-desc" placeholder="Опис товару (description)" rows="3"></textarea>
         <button onclick="saveProduct()" class="btn save-btn">ЗБЕРЕГТИ ТОВАР</button>
-        <button onclick="resetForm()" class="btn" style="width:100%; margin-top:5px;">Очистити</button>
+        <button onclick="resetForm()" class="btn" style="width:100%; margin-top:5px; background: #eee;">Очистити</button>
     </div>
 
     <table>
         <thead>
         <tr>
-            <th>Фото</th>
             <th>Назва</th>
             <th>Склад</th>
             <th>Дії</th>
@@ -59,26 +57,27 @@
 
 <script>
     let products = [];
+    const SERVER_URL = 'https://shop-test-zcei.onrender.com';
 
-    // --- Авторизація та завантаження ---
+    // Завантаження даних
     async function loadData() {
         const pass = document.getElementById('admin-pass').value;
+        if(!pass) return alert("Введіть пароль");
         try {
             const res = await fetch('products.json?v=' + Date.now());
             products = await res.json();
             document.getElementById('auth-block').style.display = 'none';
             document.getElementById('admin-content').style.display = 'block';
             renderTable();
-        } catch (e) { alert("Помилка завантаження"); }
+        } catch (e) { alert("Помилка завантаження JSON"); }
     }
 
-    // --- Малюємо таблицю товарів ---
+    // Відображення таблиці
     function renderTable() {
         const tbody = document.getElementById('table-body');
         tbody.innerHTML = products.map(p => `
             <tr>
-                <td><img src="${p.image}" class="img-pre" onerror="this.src='https://via.placeholder.com/40'"></td>
-                <td>${p.name}</td>
+                <td><b>${p.name}</b></td>
                 <td>${p.stock} шт</td>
                 <td>
                     <button class="btn edit-btn" onclick="editForm(${p.id})">⚙️</button>
@@ -88,7 +87,7 @@
         `).join('');
     }
 
-    // --- Заповнення форми для редагування ---
+    // Редагування
     function editForm(id) {
         const p = products.find(x => x.id == id);
         if (!p) return;
@@ -99,10 +98,10 @@
         document.getElementById('p-category').value = p.category;
         document.getElementById('p-image').value = p.image || "";
         document.getElementById('p-desc').value = p.description || "";
-        window.scrollTo(0,0);
+        window.scrollTo({top: 0, behavior: 'smooth'});
     }
 
-    // --- Збереження (Новий або Редагування) ---
+    // Збереження
     async function saveProduct() {
         const id = document.getElementById('p-id').value;
         const newP = {
@@ -124,28 +123,31 @@
         await sync();
     }
 
-    // --- Видалення товару ---
+    // Видалення
     async function deleteProduct(id) {
-        if (!confirm("Видалити товар?")) return;
+        if (!confirm("Видалити цей товар?")) return;
         products = products.filter(x => x.id != id);
         await sync();
     }
 
-    // --- Синхронізація з GitHub через сервер ---
+    // Синхронізація
     async function sync() {
         const pass = document.getElementById('admin-pass').value;
-        const res = await fetch('/api/admin/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: pass, filename: 'products.json', data: products })
-        });
-        if (res.ok) {
-            alert("Успішно оновлено!");
-            resetForm();
-            renderTable();
-        } else {
-            alert("Помилка збереження!");
-        }
+        try {
+            const res = await fetch(`${SERVER_URL}/api/admin/save`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: pass, filename: 'products.json', data: products })
+            });
+            if (res.ok) {
+                alert("✅ Дані оновлено на GitHub!");
+                resetForm();
+                loadData();
+            } else {
+                const err = await res.json();
+                alert("❌ Помилка: " + (err.error || "Невідомо"));
+            }
+        } catch (e) { alert("❌ Сервер Render не відповідає"); }
     }
 
     function resetForm() {
