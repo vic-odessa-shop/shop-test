@@ -18,26 +18,36 @@ app.post('/api/admin/save', async (req, res) => {
         return res.status(403).json({ error: 'Невірний пароль!' });
     }
 
-    try {
-        const filePath = `public/${filename}`;
-        const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${filePath}`;
-        const headers = {
-            Authorization: `token ${GITHUB_TOKEN}`,
-            'Accept': 'application/vnd.github.v3+json'
-        };
+    const headers = {
+        Authorization: `token ${GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json'
+    };
 
-        // 1. Получаем SHA файла
-        let sha;
-        try {
-            const getFile = await axios.get(url, { headers });
-            sha = getFile.data.sha;
-        } catch (err) {
-            return res.status(404).json({ error: `Файл ${filename} не знайдено в репозиторії!` });
+    // Пробуем два пути: в папке public и в корне
+    const pathsToTry = [`public/${filename}`, filename];
+    let successfulUrl = null;
+    let sha = null;
+
+    try {
+        for (const path of pathsToTry) {
+            const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`;
+            try {
+                const getFile = await axios.get(url, { headers });
+                sha = getFile.data.sha;
+                successfulUrl = url;
+                break; // Нашли файл!
+            } catch (err) {
+                continue; // Пробуем следующий путь
+            }
         }
 
-        // 2. Обновляем файл
-        await axios.put(url, {
-            message: 'Admin update from shop',
+        if (!successfulUrl) {
+            return res.status(404).json({ error: `Файл ${filename} не знайдено ні в /public, ні в корені репозиторію!` });
+        }
+
+        // Обновляем файл по найденному пути
+        await axios.put(successfulUrl, {
+            message: 'Admin update',
             content: Buffer.from(JSON.stringify(data, null, 2)).toString('base64'),
             sha: sha
         }, { headers });
@@ -45,10 +55,8 @@ app.post('/api/admin/save', async (req, res) => {
         res.json({ success: true });
 
     } catch (e) {
-        // Выводим РЕАЛЬНУЮ причину от GitHub
         const gitError = e.response?.data?.message || e.message;
-        console.error('GitHub Error:', gitError);
-        res.status(500).json({ error: `GitHub API: ${gitError}` });
+        res.status(500).json({ error: `GitHub API Error: ${gitError}` });
     }
 });
 
