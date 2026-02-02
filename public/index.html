@@ -45,7 +45,22 @@
         .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
         .price { font-weight: 800; font-size: 16px; }
         .add-btn { background: var(--tg-color); color: #fff; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 20px; font-weight: bold; cursor: pointer; }
-        #order-ui { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card-bg); box-shadow: 0 -5px 20px rgba(0,0,0,0.1); border-radius: 20px 20px 0 0; padding: 15px; box-sizing: border-box; z-index: 1000; display: none; }
+     #order-ui {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: var(--card-bg);
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+            border-radius: 20px 20px 0 0;
+            padding: 15px;
+            box-sizing: border-box;
+            z-index: 1000;
+            /* Гарантируем полную невидимость при старте */
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
         #customer-form input { width: 100%; padding: 12px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
         .btn-group { display: flex; gap: 10px; }
         #main-button { flex: 3; background: var(--tg-color); color: #fff; padding: 16px; border-radius: 14px; text-align: center; font-weight: bold; cursor: pointer; }
