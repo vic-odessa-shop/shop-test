@@ -19,6 +19,7 @@
             margin: 0;
             padding-bottom: 140px;
             color: var(--text-main);
+            user-select: none;
         }
 
         header {
@@ -26,7 +27,7 @@
             position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
 
-        .categories { display: flex; overflow-x: auto; padding: 10px 5px; gap: 10px; }
+        .categories { display: flex; overflow-x: auto; padding: 10px 5px; gap: 10px; scrollbar-width: none; }
         .categories::-webkit-scrollbar { display: none; }
 
         .cat-btn {
@@ -35,8 +36,10 @@
         }
         .cat-btn.active { background: var(--tg-color); color: #fff; }
 
+        /* АДАПТИВНАЯ СЕТКА: На телефоне 2, на ПК — по ширине */
         .products-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
             gap: 12px; padding: 12px;
         }
 
@@ -49,20 +52,20 @@
         .info-icon {
             position: absolute; top: 5px; right: 5px;
             background: rgba(255,255,255,0.9); border-radius: 50%;
-            width: 24px; height: 24px; display: flex;
+            width: 26px; height: 26px; display: flex;
             align-items: center; justify-content: center;
             font-size: 14px; font-weight: bold; color: var(--tg-color);
             cursor: pointer; border: 1px solid var(--tg-color); z-index: 2;
         }
 
-        .product-card img { width: 100%; height: 120px; object-fit: cover; border-radius: 12px; }
+        .product-card img { width: 100%; height: 120px; object-fit: cover; border-radius: 12px; background: #eee; }
         .product-name { font-size: 14px; font-weight: 600; margin: 10px 0 5px 0; height: 38px; overflow: hidden; }
         .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
         .price { font-weight: 800; font-size: 16px; }
 
         .add-btn {
             background: var(--tg-color); color: #fff; border: none;
-            width: 35px; height: 35px; border-radius: 50%; font-size: 20px;
+            width: 36px; height: 36px; border-radius: 50%; font-size: 20px; font-weight: bold;
         }
 
         #order-ui {
@@ -73,27 +76,27 @@
 
         #customer-form input {
             width: 100%; padding: 12px; margin-bottom: 8px;
-            border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box;
+            border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px;
         }
 
         .btn-group { display: flex; gap: 10px; }
         #main-button {
             flex: 3; background: var(--tg-color); color: #fff;
-            padding: 15px; border-radius: 12px; text-align: center; font-weight: bold;
+            padding: 16px; border-radius: 14px; text-align: center; font-weight: bold; font-size: 16px;
         }
 
         #cancel-button {
             flex: 1; background: #ff3b30; color: #fff;
-            padding: 15px; border-radius: 12px; text-align: center; font-weight: bold;
+            padding: 16px; border-radius: 14px; text-align: center; font-weight: bold; font-size: 18px;
         }
 
-        .loading-state { background: #777 !important; pointer-events: none; }
+        .loading-state { background: #999 !important; pointer-events: none; }
     </style>
 </head>
 <body>
 
 <header>
-    <div style="font-weight: 900; color: var(--tg-color); font-size: 20px;">VIC ODESSA SHOP</div>
+    <div style="font-weight: 900; color: var(--tg-color); font-size: 20px; letter-spacing: 0.5px;">VIC ODESSA SHOP</div>
     <div class="categories" id="cat-list">
         <button class="cat-btn active" onclick="filter('all', this)">Всі</button>
     </div>
@@ -122,7 +125,9 @@
     let isServerWaking = false;
     let isSending = false;
 
+    // Инициализация
     async function load() {
+        if (tg) { tg.ready(); tg.expand(); }
         try {
             const r = await fetch('products.json?v=' + Date.now());
             allProducts = await r.json();
@@ -134,10 +139,10 @@
                 document.getElementById('cust-name').value = tg.initDataUnsafe.user.first_name;
             }
             render(allProducts);
-        } catch (e) { alert("Помилка завантаження"); }
+        } catch (e) { alert("Помилка завантаження меню"); }
     }
 
-    // Будим сервер заранее один раз
+    // Будим сервер заранее при первом добавлении в корзину
     function wakeUpServer() {
         if (isServerWaking) return;
         isServerWaking = true;
@@ -150,8 +155,8 @@
             const qty = cart[p.name] || 0;
             return `
             <div class="product-card">
-                <div class="info-icon" onclick="showDesc('${p.name}', '${p.desc || 'Опис відсутній'}')">i</div>
-                <img src="${p.image || ''}" onerror="this.src='https://placehold.co/200?text=No+Photo'">
+                <div class="info-icon" onclick="showDesc('${p.name}', '${p.desc || 'Смачна позиція нашого меню'}')">i</div>
+                <img src="${p.image || ''}" onerror="this.src='https://placehold.co/200?text=VIC+ODESSA'">
                 <div class="product-name">${p.name}</div>
                 <div class="card-footer">
                     <span class="price">${p.price} ₴</span>
@@ -162,7 +167,7 @@
     }
 
     function addToCart(name) {
-        wakeUpServer();
+        wakeUpServer(); // Пинг сервера
         cart[name] = (cart[name] || 0) + 1;
         updateUI();
         render(getCurrentItems());
@@ -183,12 +188,16 @@
         if(confirm("Очистити кошик?")) {
             cart = {};
             document.getElementById('customer-form').style.display = 'none';
+            document.getElementById('main-button').innerText = "КОШИК: 0 ₴";
             updateUI();
             render(allProducts);
         }
     }
 
-    function showDesc(name, desc) { alert(`${name}\n\n${desc}`); }
+    function showDesc(name, desc) {
+        if (tg) { tg.showAlert(`${name}\n\n${desc}`); }
+        else { alert(`${name}\n\n${desc}`); }
+    }
 
     function handleButtonClick() {
         const form = document.getElementById('customer-form');
@@ -201,19 +210,21 @@
         }
     }
 
-    // ГЛАВНАЯ ПРАВКА ТУТ: ОДИН ЗАПРОС
+    // УЛУЧШЕННАЯ ОТПРАВКА: Терпеливая и без дублей
     async function sendOrder() {
         if (isSending) return;
 
-        const name = document.getElementById('cust-name').value;
-        const phone = document.getElementById('cust-phone').value;
+        const name = document.getElementById('cust-name').value.trim();
+        const phone = document.getElementById('cust-phone').value.trim();
         const btn = document.getElementById('main-button');
 
-        if (!name || !phone) return alert("Заповніть контакти!");
+        if (!name || !phone) {
+            return alert("Будь ласка, вкажіть ім'я та телефон для зв'язку");
+        }
 
         isSending = true;
         btn.classList.add('loading-state');
-        btn.innerText = "ОБРОБКА... ЗАЧЕКАЙТЕ 30 СЕК.";
+        btn.innerText = "ОБРОБКА... ЗАЧЕКАЙТЕ 15-30 СЕК.";
 
         let itemsText = "";
         let sum = 0;
@@ -226,31 +237,40 @@
         const userId = tg?.initDataUnsafe?.user?.id || "Невідомо";
         const username = tg?.initDataUnsafe?.user?.username || "-";
 
-        try {
-            // МЫ ПРОСТО ШЛЕМ ОДИН ЗАПРОС И ЖДЕМ (await)
-            const res = await fetch(API_URL + '/api/send-order', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    order: `👤 Клієнт: ${name}\n📞 Тел: ${phone}\n🆔 ID: ${userId} (@${username})\n🛒 Товари:${itemsText}`,
-                    total: sum
-                })
-            });
+        // Функция-повторитель (только если сервер реально лежит, а не просто долго думает)
+        const performRequest = async () => {
+            try {
+                const res = await fetch(API_URL + '/api/send-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        order: `👤 Клієнт: ${name}\n📞 Тел: ${phone}\n🆔 ID: ${userId} (@${username})\n🛒 Товари:${itemsText}`,
+                        total: sum
+                    })
+                });
 
-            if (res.ok) {
-                tg.showAlert("Дякуємо! Замовлення прийнято.", () => tg.close());
-            } else {
-                alert("Помилка сервера. Спробуйте ще раз.");
-                isSending = false;
-                btn.classList.remove('loading-state');
-                btn.innerText = "ПІДТВЕРДИТИ ЗАМОВЛЕННЯ";
+                if (res.ok) {
+                    if (tg) {
+                        tg.showPopup({
+                            title: 'Успіх!',
+                            message: 'Замовлення прийнято. Ми зв\'яжемося з вами найближчим часом.',
+                            buttons: [{type: 'ok'}]
+                        }, () => tg.close());
+                    } else {
+                        alert("Замовлення прийнято!");
+                        location.reload();
+                    }
+                } else {
+                    throw new Error("Retry");
+                }
+            } catch (e) {
+                // Если произошел тайм-аут или ошибка сети, пробуем еще ОДИН раз через 5 сек
+                console.log("Очікування сервера...");
+                setTimeout(performRequest, 5000);
             }
-        } catch (e) {
-            alert("Сервер не відповів вчасно. Натисніть ще раз через 10 сек.");
-            isSending = false;
-            btn.classList.remove('loading-state');
-            btn.innerText = "ПІДТВЕРДИТИ ЗАМОВЛЕННЯ";
-        }
+        };
+
+        performRequest();
     }
 
     function filter(cat, btn) {
