@@ -1,128 +1,84 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vic Odessa Shop</title>
-
+    <title>Shop Test</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --main-blue: #0088cc; --bg-color: #f2f2f7; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg-color); margin: 0; padding-bottom: 80px; }
-        header { background: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .categories { display: flex; overflow-x: auto; padding: 10px; gap: 8px; }
-        .cat-btn { background: #eee; border: none; padding: 8px 15px; border-radius: 20px; white-space: nowrap; }
-        .cat-btn.active { background: var(--main-blue); color: white; }
-        .products-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
-        .product-card { background: white; border-radius: 12px; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
-        .product-card img { width: 100%; height: 110px; object-fit: cover; border-radius: 8px; }
-        .price { font-weight: bold; margin-top: 10px; display: block; }
-        .add-btn { background: var(--main-blue); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; float: right; font-weight: bold; }
-        #order-container { position: fixed; bottom: 10px; left: 5%; width: 90%; z-index: 100; display: none; }
-        #order-bar { background: var(--main-blue); color: white; padding: 15px; border-radius: 15px; text-align: center; font-weight: bold; }
-        #customer-info { background: white; padding: 15px; border-radius: 15px; margin-bottom: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        #customer-info input { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        body { font-family: sans-serif; background-color: #f0f0f0; margin: 0; padding: 20px; text-align: center; }
+        .product-card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 10px; shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn { background: #0088cc; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        #loading { font-weight: bold; margin-top: 50px; }
     </style>
 </head>
 <body>
 
-<header>
-    <b style="color:var(--main-blue)">VIC ODESSA SHOP</b>
-    <div class="categories">
-        <button class="cat-btn active" onclick="filterItems('all', this)">Все</button>
-        <button class="cat-btn" onclick="filterItems('Піца', this)">Піца</button>
-        <button class="cat-btn" onclick="filterItems('Бургеры', this)">Бургери</button>
-        <button class="cat-btn" onclick="filterItems('Напитки', this)">Напої</button>
-    </div>
-</header>
-
-<div class="products-grid" id="container"></div>
-
-<div id="order-container">
-    <div id="customer-info" style="display: none;">
-        <input type="text" id="cust-name" placeholder="Имя">
-        <input type="tel" id="cust-phone" placeholder="Телефон">
-        <button onclick="resetOrder()" style="width:100%; background:none; border:none; color:red; font-size:12px;">ОТМЕНА</button>
-    </div>
-    <div id="order-bar" onclick="handleOrder()">ЗАКАЗАТЬ: <span id="total-price">0</span> грн</div>
+<div id="app">
+    <h2 style="color: #0088cc;">VIC ODESSA SHOP</h2>
+    <div id="loading">Завантаження товарів...</div>
+    <div id="container"></div>
 </div>
 
 <script>
-
+    // 1. Инициализация Telegram
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+        tg.ready();
+        tg.expand();
+    }
 
     const API_URL = 'https://shop-test-zcei.onrender.com/api/send-order';
-    let allProducts = [], cart = {};
+    let products = [];
 
-    async function init() {
-        const res = await fetch('products.json?v=' + Date.now());
-        allProducts = await res.json();
-        render(allProducts);
+    // 2. Функция загрузки
+    async function loadData() {
+        try {
+            // Добавляем случайное число к ссылке, чтобы избежать кэша
+            const response = await fetch('products.json?v=' + Math.random());
+            products = await response.json();
+
+            document.getElementById('loading').style.display = 'none';
+            render(products);
+        } catch (err) {
+            document.getElementById('loading').innerText = "Помилка завантаження. Перевірте файл products.json";
+            console.error(err);
+        }
     }
 
     function render(items) {
-        document.getElementById('container').innerHTML = items.map(p => `
+        const container = document.getElementById('container');
+        container.innerHTML = items.map(p => `
             <div class="product-card">
-                <img src="${p.image}">
-                <div style="font-size:13px; margin-top:5px; height:32px">${p.name}</div>
-                <div>
-                    <span class="price">${p.price} ₴</span>
-                    <button class="add-btn" onclick="addToCart(${p.id})">${cart[p.id] || '+'}</button>
-                </div>
+                <img src="${p.image}" style="width:100px; height:100px; object-fit:cover; border-radius:5px;">
+                <h3>${p.name}</h3>
+                <p>Ціна: ${p.price} ₴</p>
+                <button class="btn" onclick="makeOrder('${p.name}')">Замовити</button>
             </div>
         `).join('');
-        updateBar();
     }
 
-    function addToCart(id) {
-        cart[id] = (cart[id] || 0) + 1;
-        render(allProducts);
-    }
+    async function makeOrder(itemName) {
+        const name = "Клієнт (Телефон)";
+        const phone = "Через Telegram App";
 
-    function updateBar() {
-        let sum = 0;
-        for (let id in cart) {
-            const p = allProducts.find(x => x.id == id);
-            if (p) sum += p.price * cart[id];
-        }
-        document.getElementById('order-container').style.display = sum > 0 ? 'block' : 'none';
-        document.getElementById('total-price').innerText = sum;
-    }
-
-    function resetOrder() {
-        document.getElementById('customer-info').style.display = 'none';
-    }
-
-    function handleOrder() {
-        const info = document.getElementById('customer-info');
-        if (info.style.display === 'none') {
-            info.style.display = 'block';
-        } else {
-            send();
+        try {
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    order: `Швидке замовлення: ${itemName}\nКлієнт: ${name}`,
+                    cart: { item: itemName }
+                })
+            });
+            if (res.ok) alert("Замовлення відправлено!");
+        } catch (e) {
+            alert("Помилка при відправці");
         }
     }
 
-    async function send() {
-        const n = document.getElementById('cust-name').value;
-        const ph = document.getElementById('cust-phone').value;
-        if (!n || !ph) return alert("Введите данные!");
-
-        await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ order: `Имя: ${n}\nТел: ${ph}`, cart: cart })
-        });
-        alert("Заказ принят!");
-        cart = {};
-        resetOrder();
-        render(allProducts);
-    }
-
-    function filterItems(cat, btn) {
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        render(cat === 'all' ? allProducts : allProducts.filter(p => p.category === cat));
-    }
-
-    init();
+    // Запуск
+    loadData();
 </script>
 </body>
 </html>
