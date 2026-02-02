@@ -7,7 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Очищаем переменные от невидимых символов и пробелов
+// Чистим всё от пробелов
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN ? process.env.GITHUB_TOKEN.replace(/\s/g, '') : '';
 const GITHUB_REPO = process.env.GITHUB_REPO ? process.env.GITHUB_REPO.trim() : '';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ? process.env.ADMIN_PASSWORD.trim() : '';
@@ -24,21 +24,18 @@ app.post('/api/admin/save', async (req, res) => {
         'Accept': 'application/vnd.github.v3+json'
     };
 
+    // Прямой путь к файлу
+    const filePath = `public/${filename}`;
+    const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${filePath}`;
+
     try {
-        // Сначала находим путь к файлу
-        const searchUrl = `https://api.github.com/search/code?q=filename:${filename}+repo:${GITHUB_REPO}`;
-        const searchRes = await axios.get(searchUrl, { headers });
+        console.log(`Запрос к GitHub: ${url}`);
 
-        if (!searchRes.data.items || searchRes.data.items.length === 0) {
-            return res.status(404).json({ error: "Файл не знайдено в репозиторії" });
-        }
-
-        const filePath = searchRes.data.items[0].path;
-        const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${filePath}`;
-
+        // 1. Получаем SHA файла
         const getFile = await axios.get(url, { headers });
         const sha = getFile.data.sha;
 
+        // 2. Обновляем файл
         await axios.put(url, {
             message: 'Admin update',
             content: Buffer.from(JSON.stringify(data, null, 2)).toString('base64'),
@@ -48,8 +45,16 @@ app.post('/api/admin/save', async (req, res) => {
         res.json({ success: true });
 
     } catch (e) {
+        const status = e.response?.status;
         const msg = e.response?.data?.message || e.message;
-        res.status(500).json({ error: `GitHub API: ${msg}` });
+
+        console.error(`Ошибка GitHub: ${status} - ${msg}`);
+
+        if (status === 404) {
+            res.status(404).json({ error: `GitHub не знаходить файл за шляхом: ${filePath}. Перевір, чи є папка public і файл products.json` });
+        } else {
+            res.status(500).json({ error: `GitHub API: ${msg}` });
+        }
     }
 });
 
