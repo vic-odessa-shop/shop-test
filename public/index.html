@@ -7,36 +7,32 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root { --tg-color: #0088cc; }
-        body { font-family: sans-serif; background: #f4f4f4; margin: 0; padding-bottom: 100px; }
-        header { background: #fff; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-
-        .categories { display: flex; overflow-x: auto; padding: 10px; gap: 8px; }
-        .cat-btn { background: #ddd; border: none; padding: 8px 15px; border-radius: 15px; white-space: nowrap; font-size: 13px; }
+        body { font-family: sans-serif; background: #f4f4f4; margin: 0; padding-bottom: 120px; }
+        header { background: #fff; padding: 10px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .categories { display: flex; overflow-x: auto; padding: 10px; gap: 8px; scrollbar-width: none; }
+        .cat-btn { background: #e0e0e0; border: none; padding: 8px 15px; border-radius: 20px; white-space: nowrap; font-size: 13px; font-weight: bold; }
         .cat-btn.active { background: var(--tg-color); color: #fff; }
 
-        /* СЕТКА: 2 В РЯД */
-        .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px; }
-        .product-card { background: #fff; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; }
-        .product-card img { width: 100%; height: 110px; object-fit: cover; border-radius: 8px; }
+        /* СЕТКА 2 В РЯД */
+        .products-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
+        .product-card { background: #fff; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .product-card img { width: 100%; height: 100px; object-fit: cover; border-radius: 8px; }
         .product-name { font-size: 14px; font-weight: bold; margin: 8px 0; height: 35px; overflow: hidden; }
-
         .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
-        .price { font-weight: bold; color: #333; }
-        .add-btn { background: var(--tg-color); color: #fff; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; }
+        .price { font-weight: bold; font-size: 15px; }
+        .add-btn { background: var(--tg-color); color: #fff; border: none; width: 35px; height: 35px; border-radius: 50%; font-weight: bold; font-size: 18px; }
 
-        /* ИНТЕРФЕЙС ЗАКАЗА */
-        #order-ui { position: fixed; bottom: 15px; left: 5%; width: 90%; z-index: 1000; display: none; }
-        #customer-form { background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); margin-bottom: 8px; }
-        #customer-form input { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-
-        #main-button { background: var(--tg-color); color: #fff; padding: 15px; border-radius: 12px; text-align: center; font-weight: bold; cursor: pointer; }
-        .disabled { opacity: 0.5; pointer-events: none; }
+        #order-ui { position: fixed; bottom: 20px; left: 5%; width: 90%; z-index: 1000; display: none; }
+        #customer-form { background: #fff; padding: 15px; border-radius: 15px; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); margin-bottom: 10px; }
+        #customer-form input { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
+        #main-button { background: var(--tg-color); color: #fff; padding: 18px; border-radius: 15px; text-align: center; font-weight: bold; cursor: pointer; }
+        .loading { background: #777 !important; cursor: wait; }
     </style>
 </head>
 <body>
 
 <header>
-    <div style="font-weight: bold; color: var(--tg-color);">VIC ODESSA SHOP</div>
+    <div style="font-weight: 900; color: var(--tg-color); margin-bottom: 5px;">VIC ODESSA SHOP</div>
     <div class="categories" id="cat-list">
         <button class="cat-btn active" onclick="filter('all', this)">Все</button>
     </div>
@@ -56,49 +52,41 @@
 
 <script>
     const tg = window.Telegram?.WebApp;
-    const API_URL = 'https://shop-test-zcei.onrender.com/api/send-order';
+    const API_URL = 'https://shop-test-zcei.onrender.com';
     let allProducts = [];
-    let cart = {}; // Храним как { "Имя товара": количество }
+    let cart = {};
 
     async function load() {
         try {
             const r = await fetch('products.json?v=' + Date.now());
             allProducts = await r.json();
-
-            // Собираем категории динамически
-            const cats = [...new Set(allProducts.map(p => p.category))];
-            const catList = document.getElementById('cat-list');
+            const cats = [...new Set(allProducts.map(p => p.category))].filter(Boolean);
             cats.forEach(c => {
-                if(c) catList.innerHTML += `<button class="cat-btn" onclick="filter('${c}', this)">${c}</button>`;
+                document.getElementById('cat-list').innerHTML += `<button class="cat-btn" onclick="filter('${c}', this)">${c}</button>`;
             });
-
             render(allProducts);
-        } catch (e) { alert("Ошибка загрузки товаров"); }
+        } catch (e) { alert("Помилка завантаження"); }
     }
 
     function render(items) {
         const root = document.getElementById('container');
         root.innerHTML = items.map(p => {
             const qty = cart[p.name] || 0;
-            return `
-            <div class="product-card">
+            return `<div class="product-card">
                 <img src="${p.image || ''}">
                 <div class="product-name">${p.name}</div>
                 <div class="card-footer">
                     <span class="price">${p.price} ₴</span>
-                    <button class="add-btn" onclick="addToCart('${p.name}', ${p.price})">
-                        ${qty > 0 ? qty : '+'}
-                    </button>
+                    <button class="add-btn" onclick="addToCart('${p.name}')">${qty > 0 ? qty : '+'}</button>
                 </div>
             </div>`;
         }).join('');
     }
 
-    function addToCart(name, price) {
+    function addToCart(name) {
         cart[name] = (cart[name] || 0) + 1;
         updateUI();
-        render(getCurrentItems()); // Перерисовываем, чтобы обновить цифры на кнопках
-        if (tg) tg.HapticFeedback.impactOccurred('light');
+        render(getCurrentItems());
     }
 
     function updateUI() {
@@ -113,10 +101,9 @@
 
     function handleButtonClick() {
         const form = document.getElementById('customer-form');
-        const btn = document.getElementById('main-button');
         if (form.style.display === 'none') {
             form.style.display = 'block';
-            btn.innerText = "ПІДТВЕРДИТИ ЗАМОВЛЕННЯ";
+            document.getElementById('main-button').innerText = "ПІДТВЕРДИТИ ЗАМОВЛЕННЯ";
         } else {
             send();
         }
@@ -125,41 +112,42 @@
     async function send() {
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('cust-phone').value;
-        const total = document.getElementById('total-price').innerText;
         const btn = document.getElementById('main-button');
 
         if (!name || !phone) return alert("Заповніть контакти!");
 
-        btn.innerText = "ВІДПРАВЛЯЮ...";
-        btn.classList.add('disabled');
+        btn.classList.add('loading');
+        btn.innerText = "ПРОКИДАЮСЬ (чекайте 30 сек)...";
 
         let itemsText = "";
-        for (let name in cart) {
-            itemsText += `\n• ${name} (${cart[name]} шт.)`;
+        let sum = 0;
+        for (let n in cart) {
+            itemsText += `\n• ${n} (${cart[n]} шт.)`;
+            const p = allProducts.find(x => x.name === n);
+            if(p) sum += p.price * cart[n];
         }
 
-        try {
-            const res = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    order: `👤 Клієнт: ${name}\n📞 Тел: ${phone}\n🛒 Товари:${itemsText}`,
-                    total: total
-                })
-            });
-
-            if (res.ok) {
-                alert("Дякуємо! Замовлення прийнято.");
-                cart = {};
-                location.reload(); // Перезагрузка для очистки
-            } else {
-                throw new Error("Server error");
+        const trySend = async () => {
+            try {
+                const res = await fetch(API_URL + '/api/send-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        order: `👤 Клієнт: ${name}\n📞 Тел: ${phone}\n🛒 Товари:${itemsText}`,
+                        total: sum
+                    })
+                });
+                if (res.ok) {
+                    alert("Замовлення прийнято!");
+                    location.reload();
+                } else { throw new Error(); }
+            } catch (e) {
+                // Если ошибка — пробуем еще раз через 3 секунды, пока сервер не проснется
+                setTimeout(trySend, 3000);
             }
-        } catch (e) {
-            alert("Помилка! Можливо, сервер Render ще 'спить'. Спробуйте ще раз через 30 сек.");
-            btn.innerText = "ПІДТВЕРДИТИ ЗАМОВЛЕННЯ";
-            btn.classList.remove('disabled');
-        }
+        };
+
+        trySend();
     }
 
     function filter(cat, btn) {
@@ -170,8 +158,9 @@
     }
 
     function getCurrentItems() {
-        if (!window.currentCat || window.currentCat === 'all') return allProducts;
-        return allProducts.filter(p => p.category === window.currentCat);
+        return (window.currentCat && window.currentCat !== 'all')
+            ? allProducts.filter(p => p.category === window.currentCat)
+            : allProducts;
     }
 
     load();
