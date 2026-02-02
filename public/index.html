@@ -50,12 +50,8 @@
             font-weight: 600;
             cursor: pointer;
         }
-        .cat-btn.active {
-            background: var(--tg-color);
-            color: #fff;
-        }
+        .cat-btn.active { background: var(--tg-color); color: #fff; }
 
-        /* СЕТКА: На телефоне 2 в ряд, на ПК - сколько влезет */
         .products-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -132,7 +128,7 @@
             font-weight: bold; cursor: pointer;
         }
 
-        .loading-state { background: #777 !important; cursor: wait; }
+        .loading-state { background: #777 !important; cursor: wait; pointer-events: none; }
     </style>
 </head>
 <body>
@@ -164,7 +160,8 @@
     const API_URL = 'https://shop-test-zcei.onrender.com';
     let allProducts = [];
     let cart = {};
-    let isServerWaking = false; // Флаг, чтобы не пинговать сервер сто раз
+    let isServerWaking = false;
+    let isSending = false; // ЗАЩИТА ОТ ДУБЛЕЙ
 
     async function load() {
         try {
@@ -181,12 +178,10 @@
         } catch (e) { alert("Помилка завантаження"); }
     }
 
-    // --- ФУНКЦИЯ "БУДИЛЬНИК" ---
     function wakeUpServer() {
-        if (isServerWaking) return; // Если уже будим, больше не шлем запросы
+        if (isServerWaking) return;
         isServerWaking = true;
-        console.log("Пингуем сервер для пробуждения...");
-        fetch(API_URL + '/').catch(() => {}); // Просто стучимся в корень
+        fetch(API_URL + '/').catch(() => {});
     }
 
     function render(items) {
@@ -207,7 +202,7 @@
     }
 
     function addToCart(name) {
-        if (!isServerWaking) wakeUpServer(); // БУДИМ СЕРВЕР ПРИ ПЕРВОМ КЛИКЕ
+        if (!isServerWaking) wakeUpServer();
         cart[name] = (cart[name] || 0) + 1;
         updateUI();
         render(getCurrentItems());
@@ -247,6 +242,8 @@
     }
 
     async function send() {
+        if (isSending) return; // Если уже отправляем - игнорируем клик
+
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('cust-phone').value;
         const btn = document.getElementById('main-button');
@@ -255,6 +252,7 @@
 
         if (!name || !phone) return alert("Заповніть контакти!");
 
+        isSending = true; // Включаем блокировку
         btn.classList.add('loading-state');
         btn.innerText = "ОБРОБКА (зачекайте)...";
 
@@ -277,12 +275,22 @@
                     })
                 });
                 if (res.ok) {
-                    tg.showAlert("Дякуємо за замовлення!", () => tg.close());
-                } else { throw new Error(); }
+                    // Успех - закрываем и сбрасываем всё
+                    tg.showAlert("Дякуємо! Замовлення прийнято.", () => {
+                        isSending = false;
+                        tg.close();
+                    });
+                } else {
+                    throw new Error("Server error");
+                }
             } catch (e) {
-                setTimeout(trySend, 3000);
+                // Если сервер спит, пробуем еще раз, но только если isSending еще true
+                if (isSending) {
+                    setTimeout(trySend, 3000);
+                }
             }
         };
+
         trySend();
     }
 
