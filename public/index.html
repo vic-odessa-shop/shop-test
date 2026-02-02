@@ -7,84 +7,26 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root { --main-blue: #0088cc; --bg-color: #f2f2f7; }
-
-        body {
-            font-family: -apple-system, system-ui, sans-serif;
-            background: var(--bg-color);
-            margin: 0;
-            padding-bottom: 120px;
-        }
-
-        header {
-            background: white; padding: 15px 0;
-            position: sticky; top: 0; z-index: 100;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            text-align: center;
-        }
-
-        #main-title {
-            font-size: 20px; color: var(--main-blue); cursor: pointer; margin: 0;
-            user-select: none; -webkit-user-select: none; /* Защита от выделения при кликах */
-        }
-
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg-color); margin: 0; padding-bottom: 120px; }
+        header { background: white; padding: 15px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.05); text-align: center; }
+        #main-title { font-size: 20px; color: var(--main-blue); cursor: pointer; margin: 0; user-select: none; -webkit-user-select: none; }
         .categories { display: flex; overflow-x: auto; justify-content: center; padding: 10px; gap: 8px; }
         .cat-btn { background: #ebebeb; border: none; padding: 8px 15px; border-radius: 20px; font-weight: 500; cursor: pointer; white-space: nowrap; }
         .cat-btn.active { background: var(--main-blue); color: white; }
-
-        .products-grid {
-            display: grid; gap: 12px; padding: 12px;
-            grid-template-columns: repeat(2, 1fr);
-            max-width: 1200px; margin: 0 auto;
-        }
-
-        @media (min-width: 768px) {
-            .products-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
-        }
-
-        .product-card {
-            background: white; border-radius: 15px; padding: 10px;
-            display: flex; flex-direction: column;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-        }
-
+        .products-grid { display: grid; gap: 12px; padding: 12px; grid-template-columns: repeat(2, 1fr); max-width: 1200px; margin: 0 auto; }
+        .product-card { background: white; border-radius: 15px; padding: 10px; display: flex; flex-direction: column; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
         .product-card img { width: 100%; height: 130px; object-fit: cover; border-radius: 10px; cursor: pointer; }
-
-        .info-btn {
-            background: #f0f0f0; border: none; color: #666; width: 22px; height: 22px;
-            border-radius: 50%; font-size: 12px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;
-        }
-
+        .info-btn { background: #f0f0f0; border: none; color: #666; width: 22px; height: 22px; border-radius: 50%; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; }
         .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 10px; }
         .price { font-weight: 800; font-size: 15px; }
-
         .add-btn { background: var(--main-blue); color: white; border: none; width: 32px; height: 32px; border-radius: 50%; font-weight: bold; cursor: pointer; }
-
         .counter { display: flex; align-items: center; background: #f0f0f0; border-radius: 15px; padding: 2px; }
         .counter button { background: white; border: none; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer; }
         .counter span { min-width: 25px; text-align: center; font-weight: bold; }
-
-        #order-container {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 92%; max-width: 450px; z-index: 1000; display: none;
-        }
-
-        #customer-info {
-            display: none; background: white; padding: 15px; margin-bottom: 10px;
-            border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-
-        #customer-info input {
-            width: 100%; padding: 12px; margin-bottom: 8px; border: 1px solid #ddd;
-            border-radius: 12px; box-sizing: border-box; font-size: 16px; outline: none;
-        }
-
-        #order-bar {
-            background: var(--main-blue); color: white; padding: 18px; border-radius: 20px;
-            text-align: center; font-weight: bold; cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,136,204,0.4);
-        }
-
+        #order-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 450px; z-index: 1000; display: none; }
+        #customer-info { display: none; background: white; padding: 15px; margin-bottom: 10px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        #customer-info input { width: 100%; padding: 12px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 16px; outline: none; }
+        #order-bar { background: var(--main-blue); color: white; padding: 18px; border-radius: 20px; text-align: center; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,136,204,0.4); }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000; }
         .modal-content { background: white; padding: 20px; border-radius: 20px; width: 85%; max-width: 400px; position: relative; }
         .close-modal { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; }
@@ -96,7 +38,7 @@
     <h1 id="main-title">VIC ODESSA SHOP</h1>
     <div class="categories">
         <button class="cat-btn active" onclick="filterItems('all', this)">Все</button>
-        <button class="cat-btn" onclick="filterItems('Пицца', this)">Пицца</button>
+        <button class="cat-btn" onclick="filterItems('Піца', this)">Піца</button>
         <button class="cat-btn" onclick="filterItems('Бургеры', this)">Бургеры</button>
         <button class="cat-btn" onclick="filterItems('Напитки', this)">Напитки</button>
     </div>
@@ -131,52 +73,42 @@
     tg.expand();
 
     const RENDER_API_URL = 'https://shop-test-zcei.onrender.com/api/send-order';
-    const TARGET_CHAT_ID = '5447056649';
-
     let allProducts = [];
     let cart = {};
     let isFieldsVisible = false;
+
+    // --- Логіка таємного входу ---
     let titleClicks = 0;
     let clickTimer;
-
-    // Секретный вход в админку
     document.getElementById('main-title').addEventListener('click', () => {
         titleClicks++;
         clearTimeout(clickTimer);
-        clickTimer = setTimeout(() => { titleClicks = 0; }, 3000);
-        if (titleClicks === 5) {
-            titleClicks = 0;
-            window.location.href = 'admin.html';
-        }
+        clickTimer = setTimeout(() => titleClicks = 0, 3000);
+        if (titleClicks === 5) window.location.href = 'admin.html';
     });
 
+    // --- Завантаження товарів при старті ---
     document.addEventListener('DOMContentLoaded', async () => {
         try {
-            const res = await fetch('products.json');
+            const res = await fetch('products.json?v=' + Date.now());
             allProducts = await res.json();
             render(allProducts);
-
-            if (tg.initDataUnsafe?.user?.first_name) {
-                document.getElementById('cust-name').value = tg.initDataUnsafe.user.first_name;
-            }
-        } catch (e) { console.error("Помилка завантаження товарів"); }
+        } catch (e) { console.error("Помилка завантаження JSON"); }
     });
 
+    // --- Головна функція малювання карток ---
     function render(items) {
         const container = document.getElementById('container');
         container.innerHTML = items.map(p => {
             const qty = cart[p.id] || 0;
+            const imgPath = p.image || 'img/no-photo.png';
             return `
             <div class="product-card">
-     //           <img src="${p.image || ''}" onclick="showDesc('${p.name}', '${p.description || ''}', ${p.stock})" alt="${p.name}">
-
-                    <img src="${p.image || 'img/no-photo.png'}"
-                     onerror="this.src='https://via.placeholder.com/150?text=VIC+ODESSA'"
-                     onclick="showDesc('${p.name}', '${p.description || ''}', ${p.stock})"
-                     alt="${p.name}">
+                <img src="${imgPath}" onerror="this.src='https://via.placeholder.com/150?text=Немає+фото'"
+                     onclick="showDesc('${p.name}', '${p.description || ''}', ${p.stock})">
 
                 <div style="display: flex; align-items: flex-start; justify-content: space-between; margin: 10px 0;">
-                    <h3 style="font-size:14px; margin:0; line-height:1.2; padding-right:5px;">${p.name}</h3>
+                    <h3 style="font-size:14px; margin:0;">${p.name}</h3>
                     <button class="info-btn" onclick="showDesc('${p.name}', '${p.description || ''}', ${p.stock})">і</button>
                 </div>
 
@@ -197,130 +129,89 @@
         updateOrderBar();
     }
 
+    // --- Керування кількістю (з перевіркою складу) ---
     function changeQty(id, delta) {
         const p = allProducts.find(item => item.id == id);
         if (!p) return;
-
-        let currentQty = cart[id] || 0;
-
-        // Логика склада: если добавляем товар
-        if (delta > 0) {
-            if (p.stock !== undefined && p.stock !== null && currentQty >= p.stock) {
-                alert(`Вибачте, товару "${p.name}" на складі лише ${p.stock} шт. Якщо потрібно більше — зверніться до менеджера.`);
-                return;
-            }
+        let cur = cart[id] || 0;
+        if (delta > 0 && p.stock !== undefined && cur >= p.stock) {
+            alert(`На складі лише ${p.stock} шт.`);
+            return;
         }
-
-        cart[id] = currentQty + delta;
+        cart[id] = cur + delta;
         if (cart[id] <= 0) delete cart[id];
         render(allProducts);
     }
 
+    // --- Оновлення плашки замовлення ---
     function updateOrderBar() {
         let total = 0;
         Object.keys(cart).forEach(id => {
-            const p = allProducts.find(item => item.id == id);
+            const p = allProducts.find(x => x.id == id);
             if (p) total += p.price * cart[id];
         });
-
-        const container = document.getElementById('order-container');
-        if (total > 0) {
-            container.style.display = 'block';
-            document.getElementById('total-price').innerText = total;
-        } else {
-            container.style.display = 'none';
-            resetOrderInterface();
-        }
+        document.getElementById('order-container').style.display = total > 0 ? 'block' : 'none';
+        document.getElementById('total-price').innerText = total;
     }
 
+    // --- Скидання інтерфейсу (кнопка Скасувати) ---
     function resetOrderInterface() {
         isFieldsVisible = false;
         document.getElementById('customer-info').style.display = 'none';
         document.getElementById('order-btn-text').innerText = 'Замовити:';
     }
 
+    // --- Клік по кнопці замовлення ---
     function handleOrderClick() {
-        const infoBlock = document.getElementById('customer-info');
-        const btnText = document.getElementById('order-btn-text');
-
         if (!isFieldsVisible) {
-            infoBlock.style.display = 'block';
-            btnText.innerText = 'ПІДТВЕРДИТИ ЗАМОВЛЕННЯ';
+            document.getElementById('customer-info').style.display = 'block';
+            document.getElementById('order-btn-text').innerText = 'ПІДТВЕРДИТИ';
             isFieldsVisible = true;
-            infoBlock.scrollIntoView({ behavior: 'smooth', block: 'end' });
         } else {
             sendOrder();
         }
     }
 
+    // --- Надсилання замовлення на сервер ---
     async function sendOrder() {
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('cust-phone').value;
+        if (!name || !phone) return alert("Заповніть дані!");
 
-        if (!name || !phone) {
-            alert("Будь ласка, введіть ім'я та телефон!");
-            return;
-        }
-
-        const orderBar = document.getElementById('order-bar');
-        orderBar.style.opacity = '0.5';
-        document.getElementById('order-btn-text').innerText = 'Надсилаємо...';
-
-        // Сборка HTML сообщения (надежнее Markdown)
-        let message = `👤 <b>Нове замовлення!</b>\n`;
-        message += `━━━━━━━━━━━━━━━━━━\n`;
-        message += `👤 <b>Клієнт:</b> ${name}\n`;
-        message += `📞 <b>Телефон:</b> ${phone}\n`;
-        if (tg.initDataUnsafe?.user) {
-            const nick = tg.initDataUnsafe.user.username || 'no_nick';
-            message += `🆔 <b>TG:</b> @${nick}\n`;
-        }
-        message += `━━━━━━━━━━━━━━━━━━\n\n`;
-
-        let total = 0;
+        let text = `👤 <b>Нове замовлення!</b>\nКлієнт: ${name}\nТел: ${phone}\n\n`;
         Object.keys(cart).forEach(id => {
-            const p = allProducts.find(item => item.id == id);
-            if (p) {
-                const sum = p.price * cart[id];
-                message += `🔹 <b>${p.name}</b> x ${cart[id]} = ${sum} грн\n`;
-                total += sum;
-            }
+            const p = allProducts.find(x => x.id == id);
+            text += `• ${p.name} x ${cart[id]}\n`;
         });
-        message += `\n━━━━━━━━━━━━━━━━━━\n💰 <b>РАЗОМ: ${total} грн</b>`;
 
         try {
-            const response = await fetch(RENDER_API_URL, {
+            const res = await fetch(RENDER_API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ order: message, chat_id: TARGET_CHAT_ID, cart: cart }) // Передаем корзину для склада
+                body: JSON.stringify({ order: text, cart: cart })
             });
-
-            if (response.ok) {
-                alert("✅ Замовлення прийнято!");
+            if (res.ok) {
+                alert("Дякуємо! Замовлення прийнято.");
                 cart = {};
                 resetOrderInterface();
                 render(allProducts);
             }
-        } catch (e) {
-            alert("Помилка зв'язку з сервером.");
-        } finally {
-            orderBar.style.opacity = '1';
-        }
+        } catch (e) { alert("Помилка мережі"); }
     }
 
+    // --- Фільтр за категоріями ---
     function filterItems(cat, btn) {
         document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         render(cat === 'all' ? allProducts : allProducts.filter(p => p.category === cat));
     }
 
+    // --- Вікно опису "і" ---
     function showDesc(name, desc, stock) {
         document.getElementById('modal-title').innerText = name;
-        let stockText = (stock !== undefined && stock !== null) ? `<br><br><b>На складі:</b> ${stock} шт.` : '';
-        document.getElementById('modal-text').innerHTML = (desc || "Смачна страва!") + stockText;
+        document.getElementById('modal-text').innerHTML = `${desc}<br><br><b>На складі:</b> ${stock || 0} шт.`;
         document.getElementById('desc-modal').style.display = 'flex';
     }
-
     function closeDesc() { document.getElementById('desc-modal').style.display = 'none'; }
 </script>
 </body>

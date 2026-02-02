@@ -2,191 +2,155 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Адмін-панель VIC ODESSA</title>
+    <title>Адмін-панель</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #f0f2f5; color: #333; }
-        .container { max-width: 900px; margin: 0 auto; }
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 25px; }
-
-        h2, h4 { margin-top: 0; color: #0088cc; }
-
-        .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .full-width { grid-column: span 2; }
-
-        label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #666; }
-        input, textarea, select {
-            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px;
-            box-sizing: border-box; font-size: 14px; outline: none; transition: 0.3s;
-        }
-        input:focus { border-color: #0088cc; box-shadow: 0 0 5px rgba(0,136,204,0.2); }
-
-        .btn {
-            padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer;
-            font-weight: bold; transition: 0.2s; text-transform: uppercase;
-        }
+        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; max-width: 800px; margin: 0 auto 20px; }
+        input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        table { width: 100%; border-collapse: collapse; background: white; max-width: 800px; margin: 0 auto; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .save-btn { background: #28a745; color: white; width: 100%; margin-top: 10px; }
-        .save-btn:hover { background: #218838; }
-
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #f8f9fa; color: #666; font-size: 12px; }
-
-        .img-preview { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; background: #eee; }
-        .stock-tag { padding: 4px 8px; border-radius: 5px; font-size: 12px; font-weight: bold; }
-        .low { background: #ffebee; color: #c62828; }
-        .ok { background: #e8f5e9; color: #2e7d32; }
+        .edit-btn { background: #0088cc; color: white; }
+        .del-btn { background: #ff3b30; color: white; }
+        .img-pre { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>⚙️ Керування Магазином</h2>
+<div class="card" id="auth-block">
+    <h3>🔑 Вхід</h3>
+    <input type="password" id="admin-pass" placeholder="Пароль">
+    <button onclick="loadData()" class="btn save-btn">Увійти</button>
+</div>
 
-    <div id="auth-block" class="card">
-        <h4>🔑 Авторизація</h4>
-        <input type="password" id="admin-pass" placeholder="Введіть пароль адміністратора">
-        <button onclick="loadData()" class="btn save-btn" style="background: #0088cc;">Увійти</button>
-    </div>
-
-    <div id="admin-content" style="display:none;">
-        <div class="card">
-            <h4>📦 Редактор товару</h4>
-            <div class="grid-form">
-                <input type="hidden" id="p-id">
-
-                <div>
-                    <label>1. Назва товару</label>
-                    <input type="text" id="p-name" placeholder="Наприклад: Маргарита">
-                </div>
-
-                <div>
-                    <label>2. Ціна (грн)</label>
-                    <input type="number" id="p-price" placeholder="500">
-                </div>
-
-                <div>
-                    <label>3. Категорія</label>
-                    <select id="p-category">
-                        <option value="Піца">Піца</option>
-                        <option value="Бургеры">Бургеры</option>
-                        <option value="Напитки">Напитки</option>
-                        <option value="Інше">Інше</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label>4. Кількість на складі (шт)</label>
-                    <input type="number" id="p-stock" placeholder="10">
-                </div>
-
-                <div class="full-width">
-                    <label>5. Шлях до картинки (наприклад: img/pizza1.jpg)</label>
-                    <input type="text" id="p-image" placeholder="img/назва.jpg">
-                </div>
-
-                <div class="full-width">
-                    <label>6. Опис товару</label>
-                    <textarea id="p-desc" rows="3" placeholder="Склад, вага, особливості..."></textarea>
-                </div>
-            </div>
-            <button onclick="saveProduct()" class="btn save-btn">Зберегти товар</button>
-            <button onclick="resetForm()" class="btn" style="background:none; color: #888; width: 100%;">Очистити форму</button>
+<div id="admin-content" style="display:none;">
+    <div class="card">
+        <h3>📦 Редактор товару</h3>
+        <input type="hidden" id="p-id">
+        <input type="text" id="p-name" placeholder="Назва">
+        <div style="display: flex; gap: 10px;">
+            <input type="number" id="p-price" placeholder="Ціна">
+            <input type="number" id="p-stock" placeholder="Склад (шт)">
         </div>
-
-        <table id="products-table">
-            <thead>
-            <tr>
-                <th>Фото</th>
-                <th>Назва / Категорія</th>
-                <th>Ціна</th>
-                <th>Склад</th>
-                <th>Дії</th>
-            </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+        <select id="p-category">
+            <option value="Піца">Піца</option>
+            <option value="Бургеры">Бургеры</option>
+            <option value="Напитки">Напитки</option>
+        </select>
+        <input type="text" id="p-image" placeholder="Шлях до картинки (напр. img/1.jpg)">
+        <textarea id="p-desc" placeholder="Опис товару (description)"></textarea>
+        <button onclick="saveProduct()" class="btn save-btn">ЗБЕРЕГТИ ТОВАР</button>
+        <button onclick="resetForm()" class="btn" style="width:100%; margin-top:5px;">Очистити</button>
     </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Фото</th>
+            <th>Назва</th>
+            <th>Склад</th>
+            <th>Дії</th>
+        </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+    </table>
 </div>
 
 <script>
-    let allProducts = [];
+    let products = [];
 
+    // --- Авторизація та завантаження ---
     async function loadData() {
         const pass = document.getElementById('admin-pass').value;
-        if (!pass) return;
-
         try {
             const res = await fetch('products.json?v=' + Date.now());
-            allProducts = await res.json();
+            products = await res.json();
             document.getElementById('auth-block').style.display = 'none';
             document.getElementById('admin-content').style.display = 'block';
             renderTable();
-        } catch (e) { alert("Помилка доступу"); }
+        } catch (e) { alert("Помилка завантаження"); }
     }
 
+    // --- Малюємо таблицю товарів ---
     function renderTable() {
-        const tbody = document.querySelector('#products-table tbody');
-        tbody.innerHTML = allProducts.map(p => `
+        const tbody = document.getElementById('table-body');
+        tbody.innerHTML = products.map(p => `
             <tr>
-                <td><img src="${p.image}" class="img-preview" onerror="this.src='https://via.placeholder.com/50'"></td>
-                <td><b>${p.name}</b><br><small style="color: #888">${p.category}</small></td>
-                <td>${p.price} грн</td>
-                <td><span class="stock-tag ${p.stock < 5 ? 'low' : 'ok'}">${p.stock} шт</span></td>
+                <td><img src="${p.image}" class="img-pre" onerror="this.src='https://via.placeholder.com/40'"></td>
+                <td>${p.name}</td>
+                <td>${p.stock} шт</td>
                 <td>
-                    <button class="btn" style="background:#e3f2fd; color:#0088cc; padding: 5px 10px;" onclick="fillForm(${p.id})">⚙️</button>
+                    <button class="btn edit-btn" onclick="editForm(${p.id})">⚙️</button>
+                    <button class="btn del-btn" onclick="deleteProduct(${p.id})">🗑️</button>
                 </td>
             </tr>
         `).join('');
     }
 
-    function fillForm(id) {
-        const p = allProducts.find(x => x.id == id);
+    // --- Заповнення форми для редагування ---
+    function editForm(id) {
+        const p = products.find(x => x.id == id);
+        if (!p) return;
         document.getElementById('p-id').value = p.id;
         document.getElementById('p-name').value = p.name;
         document.getElementById('p-price').value = p.price;
         document.getElementById('p-stock').value = p.stock;
         document.getElementById('p-category').value = p.category;
-        document.getElementById('p-desc').value = p.description || "";
         document.getElementById('p-image').value = p.image || "";
-        window.scrollTo({top: 0, behavior: 'smooth'});
+        document.getElementById('p-desc').value = p.description || "";
+        window.scrollTo(0,0);
     }
 
+    // --- Збереження (Новий або Редагування) ---
     async function saveProduct() {
         const id = document.getElementById('p-id').value;
-        const product = {
+        const newP = {
             id: id ? parseInt(id) : Date.now(),
             name: document.getElementById('p-name').value,
             price: parseInt(document.getElementById('p-price').value),
-            category: document.getElementById('p-category').value,
             stock: parseInt(document.getElementById('p-stock').value),
+            category: document.getElementById('p-category').value,
             image: document.getElementById('p-image').value,
             description: document.getElementById('p-desc').value
         };
 
         if (id) {
-            const idx = allProducts.findIndex(x => x.id == id);
-            allProducts[idx] = product;
+            const idx = products.findIndex(x => x.id == id);
+            products[idx] = newP;
         } else {
-            allProducts.push(product);
+            products.push(newP);
         }
+        await sync();
+    }
 
+    // --- Видалення товару ---
+    async function deleteProduct(id) {
+        if (!confirm("Видалити товар?")) return;
+        products = products.filter(x => x.id != id);
+        await sync();
+    }
+
+    // --- Синхронізація з GitHub через сервер ---
+    async function sync() {
         const pass = document.getElementById('admin-pass').value;
         const res = await fetch('/api/admin/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: pass, filename: 'products.json', data: allProducts })
+            body: JSON.stringify({ password: pass, filename: 'products.json', data: products })
         });
-
         if (res.ok) {
-            alert("Збережено!");
-            renderTable();
+            alert("Успішно оновлено!");
             resetForm();
+            renderTable();
+        } else {
+            alert("Помилка збереження!");
         }
     }
 
     function resetForm() {
         document.getElementById('p-id').value = "";
-        document.querySelectorAll('#admin-content input, #admin-content textarea').forEach(i => i.value = "");
+        document.querySelectorAll('#admin-content input, textarea').forEach(i => i.value = "");
     }
 </script>
 </body>
