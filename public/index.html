@@ -91,67 +91,98 @@
         else sendOrderFlow();
     }
 
-    // --- АЛГОРИТМ "ЕЛЕКТРОНІК": ОПРОС ГОТОВНОСТИ + ОТПРАВКА ---
-    async function sendOrderFlow() {
-        if (isSending) return;
-        const name = document.getElementById('cust-name').value.trim();
-        const phone = document.getElementById('cust-phone').value.trim();
-        const btn = document.getElementById('main-button');
-        if (!name || !phone) return alert("Вкажіть дані!");
+ async function sendOrderFlow() {
+    if (isSending) return;
 
-        isSending = true;
-        btn.classList.add('loading-state');
+    const name = document.getElementById('cust-name').value.trim();
+    const phone = document.getElementById('cust-phone').value.trim();
+    const btn = document.getElementById('main-button');
 
-        // 1. Цикл прозвонки (будим сервер)
-        let ready = false;
-        let attempts = 0;
+    if (!name || !phone) return alert("Вкажіть дані!");
 
-        while (!ready && attempts < 20) { // макс 60 секунд ожидания
-            btn.innerText = `ПЕРЕВІРКА ЗВ'ЯЗКУ... ${attempts + 1}`;
-            try {
-                const check = await fetch(API_URL + '/', { mode: 'cors' });
-                if (check.ok) { ready = true; }
-            } catch (e) {
-                console.log("Сервер ще не готовий...");
+    isSending = true;
+    btn.classList.add('loading-state');
+
+    let ready = false;
+    let attempts = 0;
+
+    // --- ФАЗА 1: ПРОЗВОНКА (Ждем отклика сервера) ---
+    while (!ready && attempts < 20) {
+        btn.innerText = `ПЕРЕВІРКА... (${attempts + 1})`;
+        try {
+            // Кратковременный импульс для пробуждения
+            const check = await fetch(API_URL + '/', { mode: 'cors' });
+            if (check.ok) {
+                ready = true;
             }
-            if (!ready) {
-                attempts++;
-                await new Promise(r => setTimeout(r, 3000)); // пауза между импульсами 3 сек
-            }
+        } catch (e) {
+            console.log("Сервер ще спить...");
         }
 
         if (!ready) {
-            alert("Сервер не відповідає. Спробуйте пізніше.");
-            isSending = false;
-            btn.classList.remove('loading-state');
-            return;
-        }
-
-        // 2. Сервер ответил OK — отправляем пакет данных один раз
-        btn.innerText = "ВІДПРАВКА ЗАКАЗУ...";
-        let itemsText = ""; let sum = 0;
-        for (let n in cart) {
-            itemsText += `\n• ${n} (${cart[n]} шт.)`;
-            const p = allProducts.find(x => x.name === n); if(p) sum += p.price * cart[n];
-        }
-
-        try {
-            const res = await fetch(API_URL + '/api/send-order', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    order: `👤 Клієнт: ${name}\n📞 Тел: ${phone}\n🆔 ID: ${tg?.initDataUnsafe?.user?.id || '?'}\n🛒 Товари:${itemsText}`,
-                    total: sum
-                })
-            });
-            if (res.ok) { tg.showAlert("Замовлення прийнято!", () => tg.close()); }
-        } catch (e) {
-            alert("Помилка передачі даних.");
-            isSending = false;
-            btn.classList.remove('loading-state');
+            attempts++;
+            await new Promise(r => setTimeout(r, 2000)); // Интервал 2 сек
         }
     }
 
+    if (!ready) {
+        alert("Лінія зайнята. Спробуйте ще раз.");
+        resetButton();
+        return;
+    }
+
+    // --- ФАЗА 2: ЗАЩИТНАЯ ПАУЗА (Даем серверу 2 сек "продышаться") ---
+    btn.innerText = "ГОТОВНІСТЬ 100%...";
+    await new Promise(r => setTimeout(r, 2000));
+
+    // --- ФАЗА 3: ПЕРЕДАЧА ДАННЫХ ---
+    btn.innerText = "ПЕРЕДАЧА ПАКЕТУ...";
+
+    let itemsText = "";
+    let sum = 0;
+    for (let n in cart) {
+        itemsText += `\n• ${n} (${cart[n]} шт.)`;
+        const p = allProducts.find(x => x.name === n);
+        if(p) sum += p.price * cart[n];
+    }
+
+    try {
+        const res = await fetch(API_URL + '/api/send-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                order: `👤 Клієнт: ${name}\n📞 Тел: ${phone}\n🆔 ID: ${tg?.initDataUnsafe?.user?.id || 'PC-USER'}\n🛒 Товари:${itemsText}`,
+                total: sum
+            })
+        });
+
+        if (res.ok) {
+            // УСПЕХ: Данные приняты сервером
+            if (tg) {
+                tg.showAlert("Замовлення прийнято!", () => tg.close());
+            } else {
+                alert("Замовлення прийнято!");
+                location.reload();
+            }
+        } else {
+            // Сервер ответил, но с ошибкой (например, 500)
+            throw new Error("Server Error");
+        }
+    } catch (e) {
+        // Ошибка сети или таймаут
+        console.error("ОШИБКА ПЕРЕДАЧИ:", e);
+        alert("Збій при відправці. Перевірте, чи прийшло замовлення в бот.");
+        resetButton();
+    }
+}
+
+// Вспомогательная функция сброса кнопки
+function resetButton() {
+    isSending = false;
+    const btn = document.getElementById('main-button');
+    btn.classList.remove('loading-state');
+    btn.innerText = "ПІДТВЕРДИТИ ЩЕ РАЗ";
+}
     function cancelOrder() { if(confirm("Очистити кошик?")) { cart = {}; document.getElementById('customer-form').style.display = 'none'; updateUI(); render(allProducts); } }
     function filter(cat, btn) { document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); window.currentCat = cat; render(getCurrentItems()); }
     function getCurrentItems() { return (window.currentCat && window.currentCat !== 'all') ? allProducts.filter(p => p.category === window.currentCat) : allProducts; }
