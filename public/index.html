@@ -6,280 +6,136 @@
     <title>Vic Odessa Shop</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root {
-            --tg-theme-button-color: #0088cc;
-            --tg-theme-secondary-bg-color: #f2f2f7;
-        }
+        :root { --tg-color: #0088cc; }
+        body { font-family: sans-serif; background: #f4f4f4; margin: 0; padding-bottom: 100px; }
+        header { background: #fff; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--tg-theme-secondary-bg-color);
-            margin: 0;
-            padding-bottom: 100px; /* Место для кнопки заказа внизу */
-            -webkit-user-select: none;
-        }
+        .categories { display: flex; overflow-x: auto; padding: 10px; gap: 8px; }
+        .cat-btn { background: #ddd; border: none; padding: 8px 15px; border-radius: 15px; white-space: nowrap; font-size: 13px; }
+        .cat-btn.active { background: var(--tg-color); color: #fff; }
 
-        header {
-            background: #fff;
-            padding: 15px;
-            text-align: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
+        /* СЕТКА: 2 В РЯД */
+        .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px; }
+        .product-card { background: #fff; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; }
+        .product-card img { width: 100%; height: 110px; object-fit: cover; border-radius: 8px; }
+        .product-name { font-size: 14px; font-weight: bold; margin: 8px 0; height: 35px; overflow: hidden; }
 
-        .categories {
-            display: flex;
-            overflow-x: auto;
-            padding: 10px;
-            gap: 10px;
-            scrollbar-width: none;
-        }
-        .categories::-webkit-scrollbar { display: none; }
+        .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+        .price { font-weight: bold; color: #333; }
+        .add-btn { background: var(--tg-color); color: #fff; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; }
 
-        .cat-btn {
-            background: #e0e0e0;
-            border: none;
-            padding: 8px 18px;
-            border-radius: 20px;
-            white-space: nowrap;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-        }
-        .cat-btn.active {
-            background: var(--tg-theme-button-color);
-            color: #fff;
-        }
+        /* ИНТЕРФЕЙС ЗАКАЗА */
+        #order-ui { position: fixed; bottom: 15px; left: 5%; width: 90%; z-index: 1000; display: none; }
+        #customer-form { background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); margin-bottom: 8px; }
+        #customer-form input { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
 
-        /* ТУТ ИСПРАВЛЕНА СЕТКА: 2 ТОВАРА В РЯД */
-        .products-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            padding: 12px;
-        }
-
-        .product-card {
-            background: #fff;
-            border-radius: 15px;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.03);
-        }
-
-        .product-card img {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            border-radius: 10px;
-            background: #f9f9f9;
-        }
-
-        .product-name {
-            font-size: 14px;
-            font-weight: 600;
-            margin: 10px 0 5px 0;
-            height: 34px;
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-        }
-
-        .card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: auto;
-        }
-
-        .price {
-            font-weight: 700;
-            color: #333;
-        }
-
-        .add-btn {
-            background: var(--tg-theme-button-color);
-            color: #fff;
-            border: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            font-size: 18px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-
-        /* ОФОРМЛЕНИЕ ЗАКАЗА */
-        #order-ui {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            z-index: 1000;
-            display: none;
-        }
-
-        #customer-form {
-            background: #fff;
-            padding: 15px;
-            border-radius: 15px;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
-            margin-bottom: 10px;
-        }
-
-        #customer-form input {
-            width: 100%;
-            padding: 12px;
-            margin-top: 8px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-
-        #main-button {
-            background: var(--tg-theme-button-color);
-            color: #fff;
-            padding: 18px;
-            border-radius: 15px;
-            text-align: center;
-            font-weight: 700;
-            font-size: 16px;
-            box-shadow: 0 4px 15px rgba(0,136,204,0.3);
-        }
+        #main-button { background: var(--tg-color); color: #fff; padding: 15px; border-radius: 12px; text-align: center; font-weight: bold; cursor: pointer; }
+        .disabled { opacity: 0.5; pointer-events: none; }
     </style>
 </head>
 <body>
 
 <header>
-    <div style="font-weight: 800; font-size: 18px; color: #0088cc;">VIC ODESSA SHOP</div>
-    <div class="categories">
-        <button class="cat-btn active" onclick="filterItems('all', this)">Все</button>
-        <button class="cat-btn" onclick="filterItems('Піца', this)">Піца</button>
-        <button class="cat-btn" onclick="filterItems('Бургеры', this)">Бургери</button>
-        <button class="cat-btn" onclick="filterItems('Напитки', this)">Напої</button>
+    <div style="font-weight: bold; color: var(--tg-color);">VIC ODESSA SHOP</div>
+    <div class="categories" id="cat-list">
+        <button class="cat-btn active" onclick="filter('all', this)">Все</button>
     </div>
 </header>
 
-<div class="products-grid" id="container">
-</div>
+<div class="products-grid" id="container"></div>
 
 <div id="order-ui">
     <div id="customer-form" style="display: none;">
-        <div style="display:flex; justify-content: space-between; align-items: center;">
-            <b style="font-size: 14px;">Ваші контакти:</b>
-            <span onclick="toggleForm()" style="color:red; font-size:12px; font-weight:bold;">СХОВАТИ</span>
-        </div>
         <input type="text" id="cust-name" placeholder="Ваше ім'я">
         <input type="tel" id="cust-phone" placeholder="Номер телефону">
     </div>
     <div id="main-button" onclick="handleButtonClick()">
-        ОФОРМИТИ ЗАМОВЛЕННЯ: <span id="total-price">0</span> ₴
+        КОШИК: <span id="total-price">0</span> ₴
     </div>
 </div>
 
 <script>
     const tg = window.Telegram?.WebApp;
-    if (tg) {
-        tg.ready();
-        tg.expand();
-    }
-
     const API_URL = 'https://shop-test-zcei.onrender.com/api/send-order';
     let allProducts = [];
-    let cart = {};
+    let cart = {}; // Храним как { "Имя товара": количество }
 
-    // Загрузка товаров
     async function load() {
         try {
             const r = await fetch('products.json?v=' + Date.now());
             allProducts = await r.json();
+
+            // Собираем категории динамически
+            const cats = [...new Set(allProducts.map(p => p.category))];
+            const catList = document.getElementById('cat-list');
+            cats.forEach(c => {
+                if(c) catList.innerHTML += `<button class="cat-btn" onclick="filter('${c}', this)">${c}</button>`;
+            });
+
             render(allProducts);
-        } catch (e) {
-            alert("Помилка завантаження меню");
-        }
+        } catch (e) { alert("Ошибка загрузки товаров"); }
     }
 
-    // Отрисовка товаров
     function render(items) {
         const root = document.getElementById('container');
         root.innerHTML = items.map(p => {
-            const qty = cart[p.id] || 0;
+            const qty = cart[p.name] || 0;
             return `
             <div class="product-card">
-                <img src="${p.image || ''}" onerror="this.src='https://placehold.co/200?text=No+Photo'">
+                <img src="${p.image || ''}">
                 <div class="product-name">${p.name}</div>
                 <div class="card-footer">
                     <span class="price">${p.price} ₴</span>
-                    <button class="add-btn" onclick="addToCart(${p.id})">
+                    <button class="add-btn" onclick="addToCart('${p.name}', ${p.price})">
                         ${qty > 0 ? qty : '+'}
                     </button>
                 </div>
             </div>`;
         }).join('');
-        updateBar();
     }
 
-    function addToCart(id) {
-        cart[id] = (cart[id] || 0) + 1;
-        render(allProducts);
+    function addToCart(name, price) {
+        cart[name] = (cart[name] || 0) + 1;
+        updateUI();
+        render(getCurrentItems()); // Перерисовываем, чтобы обновить цифры на кнопках
         if (tg) tg.HapticFeedback.impactOccurred('light');
     }
 
-    function updateBar() {
+    function updateUI() {
         let sum = 0;
-        for (let id in cart) {
-            const p = allProducts.find(x => x.id == id);
-            if (p) sum += p.price * cart[id];
+        for (let name in cart) {
+            const p = allProducts.find(x => x.name === name);
+            if (p) sum += p.price * cart[name];
         }
         document.getElementById('order-ui').style.display = sum > 0 ? 'block' : 'none';
         document.getElementById('total-price').innerText = sum;
     }
 
-    function toggleForm() {
+    function handleButtonClick() {
         const form = document.getElementById('customer-form');
         const btn = document.getElementById('main-button');
         if (form.style.display === 'none') {
             form.style.display = 'block';
             btn.innerText = "ПІДТВЕРДИТИ ЗАМОВЛЕННЯ";
         } else {
-            form.style.display = 'none';
-            updateBar(); // Вернет текст с суммой
-        }
-    }
-
-    function handleButtonClick() {
-        const form = document.getElementById('customer-form');
-        if (form.style.display === 'none') {
-            toggleForm();
-        } else {
             send();
         }
     }
 
-    // ФИНАЛЬНАЯ ОТПРАВКА
     async function send() {
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('cust-phone').value;
         const total = document.getElementById('total-price').innerText;
+        const btn = document.getElementById('main-button');
 
-        if (!name || !phone) {
-            return alert("Будь ласка, заповніть дані для зв'язку!");
-        }
+        if (!name || !phone) return alert("Заповніть контакти!");
 
-        // Собираем текст заказа из корзины
-        let orderDetails = "";
-        for (let id in cart) {
-            const p = allProducts.find(x => x.id == id);
-            if (p) orderDetails += `\n• ${p.name} (${cart[id]} шт.)`;
+        btn.innerText = "ВІДПРАВЛЯЮ...";
+        btn.classList.add('disabled');
+
+        let itemsText = "";
+        for (let name in cart) {
+            itemsText += `\n• ${name} (${cart[name]} шт.)`;
         }
 
         try {
@@ -287,28 +143,35 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    order: `👤 Клієнт: ${name}\n📞 Тел: ${phone}\n🛒 Товари:${orderDetails}`,
+                    order: `👤 Клієнт: ${name}\n📞 Тел: ${phone}\n🛒 Товари:${itemsText}`,
                     total: total
                 })
             });
 
             if (res.ok) {
-                alert("Дякуємо! Замовлення прийнято, очікуйте дзвінка.");
+                alert("Дякуємо! Замовлення прийнято.");
                 cart = {};
-                toggleForm();
-                render(allProducts);
+                location.reload(); // Перезагрузка для очистки
             } else {
-                alert("Помилка при відправці. Спробуйте пізніше.");
+                throw new Error("Server error");
             }
         } catch (e) {
-            alert("Помилка мережі");
+            alert("Помилка! Можливо, сервер Render ще 'спить'. Спробуйте ще раз через 30 сек.");
+            btn.innerText = "ПІДТВЕРДИТИ ЗАМОВЛЕННЯ";
+            btn.classList.remove('disabled');
         }
     }
 
-    function filterItems(cat, btn) {
+    function filter(cat, btn) {
         document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        render(cat === 'all' ? allProducts : allProducts.filter(p => p.category === cat));
+        window.currentCat = cat;
+        render(getCurrentItems());
+    }
+
+    function getCurrentItems() {
+        if (!window.currentCat || window.currentCat === 'all') return allProducts;
+        return allProducts.filter(p => p.category === window.currentCat);
     }
 
     load();
