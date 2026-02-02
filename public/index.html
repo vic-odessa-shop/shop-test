@@ -13,11 +13,35 @@
         .categories::-webkit-scrollbar { display: none; }
         .cat-btn { background: #e0e0e0; border: none; padding: 8px 20px; border-radius: 20px; white-space: nowrap; font-size: 14px; font-weight: 600; cursor: pointer; }
         .cat-btn.active { background: var(--tg-color); color: #fff; }
-        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; padding: 12px; }
-        .product-card { background: var(--card-bg); border-radius: 15px; padding: 10px; display: flex; flex-direction: column; position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.04); }
+       .products-grid {
+            display: grid;
+            /* Уменьшаем минималку со 160 до 140, чтобы влезло двое */
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 8px; /* Немного сузим зазоры */
+            padding: 10px;
+     .product-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 8px; /* Уменьшаем внутренние поля */
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+            min-width: 0; /* Защита от распирания текстом */
+        }
         .info-icon { position: absolute; top: 5px; right: 5px; background: rgba(255,255,255,0.9); border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: var(--tg-color); cursor: pointer; border: 1px solid var(--tg-color); z-index: 2; }
         .product-card img { width: 100%; height: 120px; object-fit: cover; border-radius: 12px; background: #eee; }
-        .product-name { font-size: 14px; font-weight: 600; margin: 10px 0 5px 0; height: 38px; overflow: hidden; }
+     .product-name {
+            font-size: 13px; /* Чуть меньше шрифт */
+            font-weight: 600;
+            margin: 8px 0 4px 0;
+            height: 34px;
+            line-height: 1.2;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
         .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
         .price { font-weight: 800; font-size: 16px; }
         .add-btn { background: var(--tg-color); color: #fff; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 20px; font-weight: bold; cursor: pointer; }
