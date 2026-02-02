@@ -8,7 +8,7 @@ app.use(cors());
 app.use(express.json());
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const GITHUB_REPO = process.env.GITHUB_REPO;
+const GITHUB_REPO = process.env.GITHUB_REPO?.trim();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 app.post('/api/admin/save', async (req, res) => {
@@ -23,40 +23,48 @@ app.post('/api/admin/save', async (req, res) => {
         'Accept': 'application/vnd.github.v3+json'
     };
 
-    // Пробуем два пути: в папке public и в корне
-    const pathsToTry = [`public/${filename}`, filename];
-    let successfulUrl = null;
-    let sha = null;
-
     try {
-        for (const path of pathsToTry) {
-            const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`;
-            try {
-                const getFile = await axios.get(url, { headers });
-                sha = getFile.data.sha;
-                successfulUrl = url;
-                break; // Нашли файл!
-            } catch (err) {
-                continue; // Пробуем следующий путь
-            }
+        console.log(`--- Поиск файла ${filename} в репозитории ${GITHUB_REPO} ---`);
+
+        // 1. Ищем путь к файлу через поиск по репозиторию
+        // Это сработает, даже если файл в /public, в корне или любой другой папке
+        const searchUrl = `https://api.github.com/search/code?q=filename:${filename}+repo:${GITHUB_REPO}`;
+        const searchRes = await axios.get(searchUrl, { headers });
+
+        if (searchRes.data.total_count === 0) {
+            return res.status(404).json({ error: `Файл ${filename} не знайдено в репозиторії взагалі!` });
         }
 
-        if (!successfulUrl) {
-            return res.status(404).json({ error: `Файл ${filename} не знайдено ні в /public, ні в корені репозиторію!` });
-        }
+        // Берем путь первого найденного файла (обычно это и есть наш файл)
+        const filePath = searchRes.data.items[0].path;
+        const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${filePath}`;
 
-        // Обновляем файл по найденному пути
-        await axios.put(successfulUrl, {
+        console.log(`Файл найден по пути: ${filePath}`);
+
+        // 2. Получаем текущий SHA этого файла
+        const getFile = await axios.get(url, { headers });
+        const sha = getFile.data.sha;
+
+        // 3. Отправляем обновление
+        await axios.put(url, {
             message: 'Admin update',
             content: Buffer.from(JSON.stringify(data, null, 2)).toString('base64'),
             sha: sha
         }, { headers });
 
+        console.log('✅ Успешно обновлено!');
         res.json({ success: true });
 
     } catch (e) {
-        const gitError = e.response?.data?.message || e.message;
-        res.status(500).json({ error: `GitHub API Error: ${gitError}` });
+        const status = e.response?.status;
+        const msg = e.response?.data?.message || e.message;
+        console.error(`Ошибка (Статус ${status}): ${msg}`);
+
+        if (status === 403 && msg.includes('rate limit')) {
+            res.status(403).json({ error: "GitHub API rate limit exceeded. Подождите немного." });
+        } else {
+            res.status(500).json({ error: `Ошибка GitHub: ${msg}` });
+        }
     }
 });
 
