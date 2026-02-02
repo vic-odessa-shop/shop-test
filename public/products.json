@@ -45,22 +45,13 @@
     "stock": 10
   },
   {
-    "id": 1769869577988,
-    "name": "тестик",
-    "price": 777,
-    "category": "Пицца",
-    "image": "https://loremflickr.com/300/300/food?random=5",
-    "description": "Смачний опис",
-    "stock": 10
-  },
-  {
     "id": 1769871570606,
-    "name": "Пицца так себе",
-    "price": 110,
-    "category": "Пицца",
-    "image": "piza1.png",
-    "description": "Смачний опис",
-    "stock": 10
+    "name": "Пицца так себе7",
+    "price": 117,
+    "stock": 7,
+    "category": "Піца",
+    "image": "img/piza7.jpg",
+    "description": "Смачний опис7"
   },
   {
     "id": 1769873439165,
