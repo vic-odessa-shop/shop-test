@@ -4,7 +4,14 @@ const axios = require('axios');
 const cors = require('cors');
 
 const app = express();
-app.use(cors());
+//  app.use(cors());
+// Найти и заменить блок с app.use(cors()...
+app.use(cors({
+    origin: '*', // Разрешить запросы ототовсюду
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type']
+}));
+
 app.use(express.json());
 
 // Переменные окружения
