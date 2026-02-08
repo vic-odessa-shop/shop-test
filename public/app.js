@@ -31,4 +31,29 @@ function updateOrderButton() {
     document.getElementById('orderButton').innerText = `Заказать: ${totalPrice}₴`;
 }
 
+// Обновление красного кружка с количеством товаров
+function updateCartCount() {
+    let total = 0;
+    for (let key in cart) total += cart[key];
+    document.getElementById('cart-count').innerText = total;
+}
+
+// Добавление товара
+function addToCart(name) {
+    cart[name] = (cart[name] || 0) + 1;
+    updateUI();             // Показывает блок корзины, обновляет сумму
+    render(getCurrentItems());
+    updateCartCount();      // Обновляет красный кружок
+    if (tg) tg.HapticFeedback.impactOccurred('medium');
+}
+
+// Показ/скрытие блока корзины при клике на иконку
+function toggleCart() {
+    const ui = document.getElementById('order-ui');
+    ui.style.display = (ui.style.display === 'block') ? 'none' : 'block';
+}
+
+
+
+
 window.onload = loadProducts;

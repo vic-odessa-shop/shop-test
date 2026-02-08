@@ -100,10 +100,32 @@
 </head>
 <body>
 
-<header>
-    <div style="font-weight: 900; color: var(--tg-color); font-size: 20px;">VIC ODESSA SHOP</div>
-    <div class="categories" id="cat-list"><button class="cat-btn active" onclick="filter('all', this)">Всі</button></div>
+
+
+
+<header style="position:sticky; top:0; z-index:100; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,0.06); padding:10px;">
+  <!-- Верхняя строка: заголовок + корзина -->
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <!-- Заголовок слева -->
+    <div style="font-weight:900; color:var(--tg-color); font-size:20px;">
+      VIC ODESSA SHOP
+    </div>
+
+    <!-- Кнопка корзины справа -->
+    <div id="cart-btn" style="position:relative; cursor:pointer;" onclick="toggleCart()">
+      <img src="icons/cart.jpg" style="width:28px; height:28px;">
+      <span id="cart-count" style="position:absolute; top:-6px; right:-6px; background:red; color:#fff; border-radius:50%; font-size:12px; width:18px; height:18px; display:flex; align-items:center; justify-content:center;">0</span>
+    </div>
+  </div>
+
+  <!-- Панель категорий под верхней строкой -->
+  <div class="categories" id="cat-list" style="display:flex; overflow-x:auto; padding:8px 0; gap:8px;">
+    <button class="cat-btn active" onclick="filter('all', this)">Всі</button>
+    <!-- Остальные категории добавляются динамически через JS -->
+  </div>
 </header>
+
+
 
 <div class="products-grid" id="container"></div>
 
