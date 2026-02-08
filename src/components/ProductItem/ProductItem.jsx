@@ -7,6 +7,16 @@ const ProductItem = ({product, className, onAdd}) => {
         onAdd(product);
     }
 
+function App() {
+  return (
+    <div className="App" style={{paddingBottom: "80px"}}>
+      <ProductList />
+      <button style={{position:"fixed", top:0, left:0, zIndex:999}}>TEST BUTTON</button>
+    </div>
+  );
+}
+
+
     return (
         <div className={'product ' + className}>
             <div className={'img-container'}>
