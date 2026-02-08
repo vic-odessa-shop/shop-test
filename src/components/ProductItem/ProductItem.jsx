@@ -17,9 +17,11 @@ const ProductItem = ({product, className, onAdd}) => {
             <div className={'price'}>
                 <span>Стоимость: <b>{product.price}</b></span>
             </div>
-            <button className={'add-btn'} onClick={onAddHandler}>
-                Добавить в корзину
+            <button className="add-btn" onClick={onAddHandler}>
+                 <img src="/icons/ico1.jpg" className="btn-icon" />
+                 <span>Добавить</span>
             </button>
+            
         </div>
     );
 };
