@@ -19,7 +19,7 @@ const ProductItem = ({product, className, onAdd}) => {
             </div>
             <button className="add-btn" onClick={onAddHandler}>
                  <img src="/icons/ico1.jpg" className="btn-icon" />
-                 <span>Добавить</span>
+                 <span>Добавить?</span>
             </button>
             
         </div>
