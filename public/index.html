@@ -72,6 +72,30 @@
         #main-button { flex: 3; background: var(--tg-color); color: #fff; padding: 16px; border-radius: 14px; text-align: center; font-weight: bold; cursor: pointer; }
         #cancel-button { flex: 1; background: #ff3b30; color: #fff; padding: 16px; border-radius: 14px; text-align: center; font-weight: bold; cursor: pointer; }
         .loading-state { background: #999 !important; pointer-events: none; opacity: 0.7; }
+        
+        #shop-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 500; /* ниже Telegram MainButton (1000) */
+    background: #fff;
+    padding: 10px 15px;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+    font-size: 14px;
+    text-align: center;
+}
+
+#shop-footer a {
+    font-weight: 600;
+    margin: 0 5px;
+    text-decoration: none;
+}
+
+#shop-footer a:hover {
+    text-decoration: underline;
+}
+        
     </style>
 </head>
 <body>
