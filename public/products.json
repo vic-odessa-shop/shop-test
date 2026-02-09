@@ -66,10 +66,10 @@
     "id": 1769956934686,
     "name": "Пицца НЕ себе",
     "price": 1000,
-    "category": "Пицца",
+    "stock": 10,
+    "category": "Піца",
     "image": "https://loremflickr.com/300/300/food?random=10",
-    "description": "Смачний опис",
-    "stock": 10
+    "description": "Пицца с сыром пармезан "
   },
   {
     "id": 1769957108806,
