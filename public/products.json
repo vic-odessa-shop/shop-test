@@ -57,10 +57,10 @@
     "id": 1769873439165,
     "name": "Пицца так себе мне",
     "price": 73,
-    "category": "Пицца",
+    "stock": 10,
+    "category": "Піца",
     "image": "https://loremflickr.com/300/300/food?random=9",
-    "description": "Смачний опис",
-    "stock": 10
+    "description": "Пицца с сыром и мясом "
   },
   {
     "id": 1769956934686,
