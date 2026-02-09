@@ -39,10 +39,10 @@
     "id": 5,
     "name": "Товар 5",
     "price": 500,
-    "image": "https://loremflickr.com/300/300/food?random=5",
+    "stock": 10,
     "category": "Бургеры",
-    "description": "Смачний опис",
-    "stock": 10
+    "image": "https://loremflickr.com/300/300/food?random=5",
+    "description": "Бургер с котлеты "
   },
   {
     "id": 1769871570606,
