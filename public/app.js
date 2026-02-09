@@ -1,6 +1,9 @@
 let cart = {}; // { name: { price, quantity } }
 let allProducts = [];
 let showingConfirmClear = false;
+const API_URL = 'https://shop-test-zcei.onrender.com';
+const tg = window.Telegram?.WebApp;
+let isSending = false;
 
 // Загрузка товаров
 async function load() {
@@ -172,18 +175,79 @@ function handleButtonClick() {
     const phone = document.getElementById('cust-phone').value.trim();
     if (!name || !phone) return alert("Вкажіть контакти!");
 
-    // Вызов существующей функции отправки заказа
-    executeOrderAlgorithm();
+    executeOrderAlgorithm(); // вызов функции отправки заказа
+}
 
-    // После отправки: очищаем корзину и восстанавливаем карточки
-    cart = {};
-    renderProducts(getCurrentItems());
-    updateCartUI();
-    toggleCart();
+// Функция отправки заказа (твоя существующая, с доработкой очистки корзины после отправки)
+async function executeOrderAlgorithm() {
+    if (isSending) return;
+    const name = document.getElementById('cust-name').value.trim();
+    const phone = document.getElementById('cust-phone').value.trim();
+    const btn = document.getElementById('main-button');
+    if (!name || !phone) return alert("Вкажіть контакти!");
+
+    isSending = true;
+    btn.classList.add('loading-state');
+
+    // 1. Прозвонка
+    let ready = false; let attempts = 0;
+    while (!ready && attempts < 15) {
+        btn.innerText = `ЗВ'ЯЗОК... ${attempts + 1}`;
+        try {
+            const check = await fetch(API_URL + '/', { mode: 'cors', cache: 'no-cache' });
+            if (check.ok) ready = true;
+        } catch (e) { console.log("Чекаємо..."); }
+        if (!ready) { attempts++; await new Promise(r => setTimeout(r, 2000)); }
+    }
+
+    // 2. Формирование данных
+    btn.innerText = "ОБРОБКА...";
+    let itemsText = ""; let sum = 0;
+    for (let n in cart) {
+        itemsText += `\n• ${n} (${cart[n].quantity} шт.)`;
+        sum += cart[n].price * cart[n].quantity;
+    }
+
+    // 3. Отправка
+    btn.innerText = "ВІДПРАВКА...";
+    try {
+        await fetch(API_URL + '/api/send-order', {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                order: `👤 Клієнт: ${name}\n📞 Тел: ${phone}\n🛒 Товари:${itemsText}`,
+                total: sum
+            })
+        });
+    } catch (e) { console.log("Ошибка отправки"); }
+
+    // 4. Финиш
+    btn.innerText = "ГОТОВО!";
+    if (tg && tg.showPopup) {
+        tg.showPopup({
+            title: 'Замовлення прийнято!',
+            message: 'Ми вже готуємо ваш чек.',
+            buttons: [{type: 'ok', text: 'ОК'}]
+        }, () => {
+            tg.close();
+            cart = {};
+            renderProducts(getCurrentItems());
+            updateCartUI();
+        });
+    } else {
+        alert("Дякуємо! Ваше замовлення прийнято.");
+        cart = {};
+        renderProducts(getCurrentItems());
+        updateCartUI();
+    }
 }
 
 // Всплывающие описания
-function showDesc(name, desc) { alert(`${name}\n\n${desc}`); }
+function showDesc(name, desc) { 
+    if (tg) tg.showAlert(`${name}\n\n${desc}`); 
+    else alert(`${name}\n\n${desc}`); 
+}
 
 // Загрузка сразу
 load();
