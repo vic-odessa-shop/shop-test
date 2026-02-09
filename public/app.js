@@ -1,59 +1,153 @@
-let cart = [];
-let totalPrice = 0;
+let cart = {}; // { name: { price, quantity } }
+let allProducts = []; // сюда загрузятся товары
 
-async function loadProducts() {
-    const response = await fetch('products.json');
-    const products = await response.json();
-    const productsContainer = document.querySelector('.products');
+// Загрузка товаров
+async function load() {
+    try {
+        const r = await fetch('products.json?v=' + Date.now());
+        allProducts = await r.json();
+        renderCategories();
+        renderProducts(allProducts);
+    } catch (e) {
+        console.error("Ошибка загрузки товаров:", e);
+    }
+}
 
-    products.forEach(product => {
-        const productDiv = document.createElement('div');
-        productDiv.classList.add('product');
-
-        productDiv.innerHTML = `
-            <img src="${product.image}" alt="${product.name}" />
-            <h3>${product.name}</h3>
-            <p>${product.price}₴</p>
-            <button onclick="addToCart(${product.id}, ${product.price})">+</button>
-        `;
-
-        productsContainer.appendChild(productDiv);
+// Рендер категорий
+function renderCategories() {
+    const cats = [...new Set(allProducts.map(p => p.category))].filter(Boolean);
+    const catList = document.getElementById('cat-list');
+    cats.forEach(c => {
+        const btn = document.createElement('button');
+        btn.className = 'cat-btn';
+        btn.innerText = c;
+        btn.onclick = () => filter(c, btn);
+        catList.appendChild(btn);
     });
 }
 
-function addToCart(id, price) {
-    cart.push(id);
-    totalPrice += price;
-    updateOrderButton();
+// Рендер карточек товаров
+function renderProducts(items) {
+    const container = document.getElementById('container');
+    container.innerHTML = '';
+
+    items.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.innerHTML = `
+            <div class="info-icon" onclick="showDesc('${p.name}', '${p.desc || 'Смачна позиція'}')">i</div>
+            <img src="${p.image || ''}" onerror="this.src='https://placehold.co/200?text=VIC+ODESSA'">
+            <div class="product-name">${p.name}</div>
+            <div class="card-footer">
+                <span class="price">${p.price} ₴</span>
+                <button class="add-btn" onclick="addToCart('${p.name}', ${p.price})">
+                    ${cart[p.name]?.quantity || '+'}
+                </button>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+
+    updateCartUI(); // чтобы кружки сразу показывали количество
 }
 
-function updateOrderButton() {
-    document.getElementById('orderButton').innerText = `Заказать: ${totalPrice}₴`;
-}
-
-// Обновление красного кружка с количеством товаров
-function updateCartCount() {
-    let total = 0;
-    for (let key in cart) total += cart[key];
-    document.getElementById('cart-count').innerText = total;
+// Фильтр по категории
+function filter(cat, btn) {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const items = cat === 'all' ? allProducts : allProducts.filter(p => p.category === cat);
+    renderProducts(items);
 }
 
 // Добавление товара
-function addToCart(name) {
-    cart[name] = (cart[name] || 0) + 1;
-    updateUI();             // Показывает блок корзины, обновляет сумму
-    render(getCurrentItems());
-    updateCartCount();      // Обновляет красный кружок
-    if (tg) tg.HapticFeedback.impactOccurred('medium');
+function addToCart(name, price) {
+    if (!cart[name]) cart[name] = { price: price, quantity: 0 };
+    cart[name].quantity++;
+    renderProducts(getCurrentItems());
+    updateCartUI();
 }
 
-// Показ/скрытие блока корзины при клике на иконку
+// Удаление товара
+function removeFromCart(name) {
+    if (cart[name]) {
+        cart[name].quantity--;
+        if (cart[name].quantity <= 0) delete cart[name];
+        renderProducts(getCurrentItems());
+        updateCartUI();
+    }
+}
+
+// Текущие элементы по фильтру
+function getCurrentItems() {
+    const activeBtn = document.querySelector('.cat-btn.active');
+    if (!activeBtn || activeBtn.innerText === 'Всі') return allProducts;
+    return allProducts.filter(p => p.category === activeBtn.innerText);
+}
+
+// Обновление интерфейса корзины
+function updateCartUI() {
+    let totalQuantity = 0;
+    let totalPrice = 0;
+    const cartItemsContainer = document.getElementById('cart-items');
+    cartItemsContainer.innerHTML = '';
+
+    for (let name in cart) {
+        const item = cart[name];
+        totalQuantity += item.quantity;
+        totalPrice += item.price * item.quantity;
+
+        const div = document.createElement('div');
+        div.style.display = "flex";
+        div.style.justifyContent = "space-between";
+        div.style.alignItems = "center";
+        div.style.marginBottom = "6px";
+        div.innerHTML = `
+            <span>${name} (${item.quantity} шт.)</span>
+            <div>
+                <button onclick="removeFromCart('${name}')">-</button>
+                <button onclick="addToCart('${name}', ${item.price})">+</button>
+            </div>
+        `;
+        cartItemsContainer.appendChild(div);
+    }
+
+    document.getElementById('cart-total').innerText = `Ітого: ${totalPrice} ₴`;
+    document.getElementById('cart-count').innerText = totalQuantity;
+
+    // Обновляем кнопку корзины
+    const mainBtn = document.getElementById('main-button');
+    mainBtn.innerText = totalQuantity > 0 ? `Кошик: ${totalPrice} ₴` : 'Пiдтвердити замовлення';
+}
+
+// Показ/скрытие окна корзины
 function toggleCart() {
     const ui = document.getElementById('order-ui');
     ui.style.display = (ui.style.display === 'block') ? 'none' : 'block';
 }
 
+// Очистка корзины
+function cancelOrder() {
+    if (confirm("Очистити кошик?")) {
+        cart = {};
+        updateCartUI();
+        document.getElementById('cust-name').value = '';
+        document.getElementById('cust-phone').value = '';
+    }
+}
 
+// Подтверждение заказа
+function handleButtonClick() {
+    const form = document.getElementById('customer-form');
+    if (Object.keys(cart).length === 0) return alert("Корзина порожня!");
 
+    const name = document.getElementById('cust-name').value.trim();
+    const phone = document.getElementById('cust-phone').value.trim();
+    if (!name || !phone) return alert("Вкажіть контакти!");
 
-window.onload = loadProducts;
+    executeOrderAlgorithm(); // твоя существующая функция
+}
+
+// Всплывающие описания
+function showDesc(name, desc) { alert(`${name}\n\n${desc}`); }
+
+load(); // старт

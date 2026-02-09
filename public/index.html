@@ -14,7 +14,6 @@
         .cat-btn { background: #e0e0e0; border: none; padding: 8px 20px; border-radius: 20px; white-space: nowrap; font-size: 14px; font-weight: 600; cursor: pointer; }
         .cat-btn.active { background: var(--tg-color); color: #fff; }
 
-        /* Исправленная сетка */
         .products-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -52,7 +51,6 @@
         .price { font-weight: 800; font-size: 16px; }
         .add-btn { background: var(--tg-color); color: #fff; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 20px; font-weight: bold; cursor: pointer; }
 
-        /* Исправленный UI корзины */
         #order-ui {
             position: fixed;
             bottom: 0;
@@ -67,218 +65,71 @@
             display: none; /* Скрыто по умолчанию */
         }
 
+        #cart-items div button { margin: 0 2px; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--tg-color); background:#fff; cursor:pointer; }
+
         #customer-form input { width: 100%; padding: 12px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
-        .btn-group { display: flex; gap: 10px; }
+
+        .btn-group { display: flex; gap: 10px; margin-top:10px; }
         #main-button { flex: 3; background: var(--tg-color); color: #fff; padding: 16px; border-radius: 14px; text-align: center; font-weight: bold; cursor: pointer; }
         #cancel-button { flex: 1; background: #ff3b30; color: #fff; padding: 16px; border-radius: 14px; text-align: center; font-weight: bold; cursor: pointer; }
-        .loading-state { background: #999 !important; pointer-events: none; opacity: 0.7; }
-        
+
         #shop-footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    z-index: 500; /* ниже Telegram MainButton (1000) */
-    background: #fff;
-    padding: 10px 15px;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
-    font-size: 14px;
-    text-align: center;
-}
-
-#shop-footer a {
-    font-weight: 600;
-    margin: 0 5px;
-    text-decoration: none;
-}
-
-#shop-footer a:hover {
-    text-decoration: underline;
-}
-        
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            z-index: 500;
+            background: #fff;
+            padding: 10px 15px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+            font-size: 14px;
+            text-align: center;
+        }
+        #shop-footer a { font-weight: 600; margin: 0 5px; text-decoration: none; }
+        #shop-footer a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
-
-
-
 <header style="position:sticky; top:0; z-index:100; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,0.06); padding:10px;">
-  <!-- Верхняя строка: заголовок + корзина -->
   <div style="display:flex; justify-content:space-between; align-items:center;">
-    <!-- Заголовок слева -->
-    <div style="font-weight:900; color:var(--tg-color); font-size:20px;">
-      VIC ODESSA SHOP
-    </div>
-
-    <!-- Кнопка корзины справа -->
+    <div style="font-weight:900; color:var(--tg-color); font-size:20px;">VIC ODESSA SHOP</div>
     <div id="cart-btn" style="position:relative; cursor:pointer;" onclick="toggleCart()">
-      
       <img src="icons/ico1.jpg" style="width:28px; height:28px;">
       <span id="cart-count" style="position:absolute; top:-6px; right:-6px; background:red; color:#fff; border-radius:50%; font-size:12px; width:18px; height:18px; display:flex; align-items:center; justify-content:center;">0</span>
     </div>
   </div>
 
-  <!-- Панель категорий под верхней строкой -->
   <div class="categories" id="cat-list" style="display:flex; overflow-x:auto; padding:8px 0; gap:8px;">
     <button class="cat-btn active" onclick="filter('all', this)">Всі</button>
-    <!-- Остальные категории добавляются динамически через JS -->
   </div>
 </header>
-
-
 
 <div class="products-grid" id="container"></div>
 
 <div id="order-ui">
-    <div id="customer-form" style="display: none;">
+    <div id="cart-items"></div>
+    <div id="cart-total" style="margin-top:10px; font-weight:bold; font-size:16px;"></div>
+
+    <div id="customer-form">
         <input type="text" id="cust-name" placeholder="Ваше ім'я">
         <input type="tel" id="cust-phone" placeholder="Номер телефону">
     </div>
+
     <div class="btn-group">
-        <div id="cancel-button" onclick="cancelOrder()">❌</div>
-        <div id="main-button" onclick="handleButtonClick()">КОШИК: <span id="total-price">0</span> ₴</div>
+        <div id="cancel-button" onclick="cancelOrder()">❌ Очистити</div>
+        <div id="main-button" onclick="handleButtonClick()">Пiдтвердити замовлення</div>
     </div>
 </div>
 
-
-<footer id="shop-footer" style="padding:10px 15px; background:#fff; text-align:center; font-size:14px; color:#222; box-shadow: 0 -2px 5px rgba(0,0,0,0.05);">
+<footer id="shop-footer">
     <div>📍 Адрес: м. Одеса, вул. Дерибасівська, 1</div>
     <div style="margin-top:5px;">
-        <a href="https://t.me/vicodessashop" target="_blank" style="color:#0088cc; text-decoration:none; margin-right:10px;">Telegram</a>
-        <a href="viber://chat?number=%2B380000000000" target="_blank" style="color:#59267c; text-decoration:none;">Viber</a>
+        <a href="https://t.me/vicodessashop" target="_blank" style="color:#0088cc;">Telegram</a>
+        <a href="viber://chat?number=%2B380000000000" target="_blank" style="color:#59267c;">Viber</a>
     </div>
 </footer>
 
-
-
-
-<script>
-    const tg = window.Telegram?.WebApp;
-    const API_URL = 'https://shop-test-zcei.onrender.com';
-    let allProducts = [], cart = {}, isSending = false;
-
-    async function load() {
-        if (tg) { tg.ready(); tg.expand(); }
-        try {
-            const r = await fetch('products.json?v=' + Date.now());
-            allProducts = await r.json();
-            const cats = [...new Set(allProducts.map(p => p.category))].filter(Boolean);
-            cats.forEach(c => { document.getElementById('cat-list').innerHTML += `<button class="cat-btn" onclick="filter('${c}', this)">${c}</button>`; });
-            if (tg?.initDataUnsafe?.user?.first_name) document.getElementById('cust-name').value = tg.initDataUnsafe.user.first_name;
-            render(allProducts);
-        } catch (e) { console.error("Load error"); }
-    }
-
-    function render(items) {
-        document.getElementById('container').innerHTML = items.map(p => `
-            <div class="product-card">
-                <div class="info-icon" onclick="showDesc('${p.name}', '${p.desc || 'Смачна позиція нашого меню'}')">i</div>
-                <img src="${p.image || ''}" onerror="this.src='https://placehold.co/200?text=VIC+ODESSA'">
-                <div class="product-name">${p.name}</div>
-                <div class="card-footer">
-                    <span class="price">${p.price} ₴</span>
-                    <button class="add-btn" onclick="addToCart('${p.name}')">${cart[p.name] || '+'}</button>
-                </div>
-            </div>`).join('');
-    }
-
-    function addToCart(name) {
-        cart[name] = (cart[name] || 0) + 1;
-        updateUI();
-        render(getCurrentItems());
-        if (tg) tg.HapticFeedback.impactOccurred('medium');
-    }
-
-    function updateUI() {
-        let sum = 0;
-        for (let n in cart) {
-            const p = allProducts.find(x => x.name === n);
-            if (p) sum += p.price * cart[n];
-        }
-
-        const ui = document.getElementById('order-ui');
-        if (sum > 0) {
-            ui.style.display = 'block';
-        } else {
-            ui.style.display = 'none';
-        }
-        document.getElementById('total-price').innerText = sum;
-    }
-
-    function handleButtonClick() {
-        const form = document.getElementById('customer-form');
-        const btn = document.getElementById('main-button');
-        if (form.style.display === 'none') {
-            form.style.display = 'block';
-            btn.innerText = "ПІДТВЕРДИТИ ЗАМОВЛЕННЯ";
-        } else {
-            executeOrderAlgorithm();
-        }
-    }
-
-    async function executeOrderAlgorithm() {
-        if (isSending) return;
-        const name = document.getElementById('cust-name').value.trim();
-        const phone = document.getElementById('cust-phone').value.trim();
-        const btn = document.getElementById('main-button');
-        if (!name || !phone) return alert("Вкажіть контакти!");
-
-        isSending = true;
-        btn.classList.add('loading-state');
-
-        // 1. Прозвонка
-        let ready = false; let attempts = 0;
-        while (!ready && attempts < 15) {
-            btn.innerText = `ЗВ'ЯЗОК... ${attempts + 1}`;
-            try {
-                const check = await fetch(API_URL + '/', { mode: 'cors', cache: 'no-cache' });
-                if (check.ok) ready = true;
-            } catch (e) { console.log("Чекаємо..."); }
-            if (!ready) { attempts++; await new Promise(r => setTimeout(r, 2000)); }
-        }
-
-        // 2. Дані
-        btn.innerText = "ОБРОБКА...";
-        let itemsText = ""; let sum = 0;
-        for (let n in cart) {
-            itemsText += `\n• ${n} (${cart[n]} шт.)`;
-            const p = allProducts.find(x => x.name === n); if(p) sum += p.price * cart[n];
-        }
-
-        // 3. Відправка
-        btn.innerText = "ВІДПРАВКА...";
-        try {
-            await fetch(API_URL + '/api/send-order', {
-                method: 'POST',
-                mode: 'cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    order: `👤 Клієнт: ${name}\n📞 Тел: ${phone}\n🆔 ID: ${tg?.initDataUnsafe?.user?.id || 'PC-USER'} (@${tg?.initDataUnsafe?.user?.username || '-'}) \n🛒 Товари:${itemsText}`,
-                    total: sum
-                })
-            });
-        } catch (e) { console.log("Пакет пішов"); }
-
-        // 4. Фінал
-        btn.innerText = "ГОТОВО!";
-        if (tg && tg.showPopup) {
-            tg.showPopup({
-                title: 'Замовлення прийнято!',
-                message: 'Ми вже готуємо ваш чек.',
-                buttons: [{type: 'ok', text: 'ОК'}]
-            }, () => tg.close());
-        } else {
-            alert("Дякуємо! Ваше замовлення прийнято.");
-            location.reload();
-        }
-    }
-
-    function showDesc(name, desc) { if (tg) tg.showAlert(`${name}\n\n${desc}`); else alert(`${name}\n\n${desc}`); }
-    function cancelOrder() { if(confirm("Очистити кошик?")) { cart = {}; document.getElementById('customer-form').style.display = 'none'; document.getElementById('main-button').innerText = "КОШИК: 0 ₴"; updateUI(); render(getCurrentItems()); } }
-    function filter(cat, btn) { document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); window.currentCat = cat; render(getCurrentItems()); }
-    function getCurrentItems() { return (window.currentCat && window.currentCat !== 'all') ? allProducts.filter(p => p.category === window.currentCat) : allProducts; }
-    load();
-</script>
+<script src="app.js"></script>
 </body>
 </html>
