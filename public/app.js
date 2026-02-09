@@ -49,7 +49,7 @@ function renderProducts(items) {
         container.appendChild(card);
     });
 
-    updateCartUI(); // обновляем красный кружок и кнопку
+    updateCartUI();
 }
 
 // Фильтр по категории
@@ -78,7 +78,7 @@ function removeFromCart(name) {
     }
 }
 
-// Получаем текущие товары по фильтру
+// Текущие элементы по фильтру
 function getCurrentItems() {
     const activeBtn = document.querySelector('.cat-btn.active');
     if (!activeBtn || activeBtn.innerText === 'Всі') return allProducts;
@@ -96,7 +96,6 @@ function updateCartUI() {
     let totalPrice = 0;
 
     if (showingConfirmClear) {
-        // Если показываем окно подтверждения очистки
         cartItemsContainer.innerHTML = `<div style="margin-bottom:10px;">Вы точно хотите удалить всё из корзины?</div>`;
         const div = document.createElement('div');
         div.style.display = 'flex';
@@ -111,7 +110,6 @@ function updateCartUI() {
         return;
     }
 
-    // Стандартное отображение корзины с товарами
     for (let name in cart) {
         const item = cart[name];
         totalQuantity += item.quantity;
@@ -132,9 +130,8 @@ function updateCartUI() {
         cartItemsContainer.appendChild(div);
     }
 
-    cartTotalContainer.innerText = `Ітого: ${totalPrice} ₴`;
+    cartTotalContainer.innerText = totalQuantity > 0 ? `Ітого: ${totalPrice} ₴` : '';
     document.getElementById('cart-count').innerText = totalQuantity;
-
     mainBtn.innerText = totalQuantity > 0 ? 'Пiдтвердити замовлення' : 'Пiдтвердити замовлення';
 }
 
@@ -142,13 +139,13 @@ function updateCartUI() {
 function toggleCart() {
     const ui = document.getElementById('order-ui');
     ui.style.display = (ui.style.display === 'block') ? 'none' : 'block';
-    showingConfirmClear = false; // сброс подтверждения
+    showingConfirmClear = false;
     updateCartUI();
 }
 
 // Начало процесса очистки корзины
 function cancelOrder() {
-    if (Object.keys(cart).length === 0) return; // если пусто, ничего не делаем
+    if (Object.keys(cart).length === 0) return;
     showingConfirmClear = true;
     updateCartUI();
 }
@@ -163,8 +160,9 @@ function cancelClear() {
 function confirmClear() {
     cart = {};
     showingConfirmClear = false;
+    renderProducts(getCurrentItems());
     updateCartUI();
-    toggleCart(); // скрываем окно корзины
+    toggleCart();
 }
 
 // Подтверждение заказа
@@ -173,10 +171,19 @@ function handleButtonClick() {
     const name = document.getElementById('cust-name').value.trim();
     const phone = document.getElementById('cust-phone').value.trim();
     if (!name || !phone) return alert("Вкажіть контакти!");
-    executeOrderAlgorithm(); // твоя существующая функция
+
+    // Вызов существующей функции отправки заказа
+    executeOrderAlgorithm();
+
+    // После отправки: очищаем корзину и восстанавливаем карточки
+    cart = {};
+    renderProducts(getCurrentItems());
+    updateCartUI();
+    toggleCart();
 }
 
 // Всплывающие описания
 function showDesc(name, desc) { alert(`${name}\n\n${desc}`); }
 
+// Загрузка сразу
 load();
