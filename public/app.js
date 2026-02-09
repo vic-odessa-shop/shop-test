@@ -1,5 +1,6 @@
 let cart = {}; // { name: { price, quantity } }
-let allProducts = []; // сюда загрузятся товары
+let allProducts = [];
+let showingConfirmClear = false;
 
 // Загрузка товаров
 async function load() {
@@ -48,7 +49,7 @@ function renderProducts(items) {
         container.appendChild(card);
     });
 
-    updateCartUI(); // чтобы кружки сразу показывали количество
+    updateCartUI(); // обновляем красный кружок и кнопку
 }
 
 // Фильтр по категории
@@ -77,7 +78,7 @@ function removeFromCart(name) {
     }
 }
 
-// Текущие элементы по фильтру
+// Получаем текущие товары по фильтру
 function getCurrentItems() {
     const activeBtn = document.querySelector('.cat-btn.active');
     if (!activeBtn || activeBtn.innerText === 'Всі') return allProducts;
@@ -86,11 +87,31 @@ function getCurrentItems() {
 
 // Обновление интерфейса корзины
 function updateCartUI() {
+    const cartItemsContainer = document.getElementById('cart-items');
+    const cartTotalContainer = document.getElementById('cart-total');
+    const mainBtn = document.getElementById('main-button');
+
+    cartItemsContainer.innerHTML = '';
     let totalQuantity = 0;
     let totalPrice = 0;
-    const cartItemsContainer = document.getElementById('cart-items');
-    cartItemsContainer.innerHTML = '';
 
+    if (showingConfirmClear) {
+        // Если показываем окно подтверждения очистки
+        cartItemsContainer.innerHTML = `<div style="margin-bottom:10px;">Вы точно хотите удалить всё из корзины?</div>`;
+        const div = document.createElement('div');
+        div.style.display = 'flex';
+        div.style.justifyContent = 'space-between';
+        div.innerHTML = `
+            <button onclick="cancelClear()" style="flex:1; margin-right:5px; padding:10px; border-radius:10px; border:1px solid #ccc;">Отменить</button>
+            <button onclick="confirmClear()" style="flex:1; margin-left:5px; padding:10px; border-radius:10px; background:red; color:#fff; border:none;">Подтвердить</button>
+        `;
+        cartItemsContainer.appendChild(div);
+        cartTotalContainer.innerText = '';
+        mainBtn.innerText = 'Пiдтвердити замовлення';
+        return;
+    }
+
+    // Стандартное отображение корзины с товарами
     for (let name in cart) {
         const item = cart[name];
         totalQuantity += item.quantity;
@@ -111,43 +132,51 @@ function updateCartUI() {
         cartItemsContainer.appendChild(div);
     }
 
-    document.getElementById('cart-total').innerText = `Ітого: ${totalPrice} ₴`;
+    cartTotalContainer.innerText = `Ітого: ${totalPrice} ₴`;
     document.getElementById('cart-count').innerText = totalQuantity;
 
-    // Обновляем кнопку корзины
-    const mainBtn = document.getElementById('main-button');
-    mainBtn.innerText = totalQuantity > 0 ? `Кошик: ${totalPrice} ₴` : 'Пiдтвердити замовлення';
+    mainBtn.innerText = totalQuantity > 0 ? 'Пiдтвердити замовлення' : 'Пiдтвердити замовлення';
 }
 
 // Показ/скрытие окна корзины
 function toggleCart() {
     const ui = document.getElementById('order-ui');
     ui.style.display = (ui.style.display === 'block') ? 'none' : 'block';
+    showingConfirmClear = false; // сброс подтверждения
+    updateCartUI();
 }
 
-// Очистка корзины
+// Начало процесса очистки корзины
 function cancelOrder() {
-    if (confirm("Очистити кошик?")) {
-        cart = {};
-        updateCartUI();
-        document.getElementById('cust-name').value = '';
-        document.getElementById('cust-phone').value = '';
-    }
+    if (Object.keys(cart).length === 0) return; // если пусто, ничего не делаем
+    showingConfirmClear = true;
+    updateCartUI();
+}
+
+// Отмена очистки корзины
+function cancelClear() {
+    showingConfirmClear = false;
+    updateCartUI();
+}
+
+// Подтверждение очистки корзины
+function confirmClear() {
+    cart = {};
+    showingConfirmClear = false;
+    updateCartUI();
+    toggleCart(); // скрываем окно корзины
 }
 
 // Подтверждение заказа
 function handleButtonClick() {
-    const form = document.getElementById('customer-form');
     if (Object.keys(cart).length === 0) return alert("Корзина порожня!");
-
     const name = document.getElementById('cust-name').value.trim();
     const phone = document.getElementById('cust-phone').value.trim();
     if (!name || !phone) return alert("Вкажіть контакти!");
-
     executeOrderAlgorithm(); // твоя существующая функция
 }
 
 // Всплывающие описания
 function showDesc(name, desc) { alert(`${name}\n\n${desc}`); }
 
-load(); // старт
+load();
