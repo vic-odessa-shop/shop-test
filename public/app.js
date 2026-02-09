@@ -1,172 +1,273 @@
-const tg = window.Telegram?.WebApp || null;
-
-let cart = {};
-let isSending = false;
+let cart = {}; // { name: { price, quantity } }
+let allProducts = [];
 let showingConfirmClear = false;
+let isSending = false;
 
-// ==== товары (пример) ====
-const products = [
-    { id: 1, name: 'Товар 1', price: 100 },
-    { id: 2, name: 'Товар 2', price: 150 },
-    { id: 3, name: 'Товар 3', price: 200 }
-];
+const tg = window.Telegram?.WebApp;
+const API_URL = 'https://shop-test-zcei.onrender.com';
 
-// ==== render товаров ====
-function renderProducts(items) {
-    const wrap = document.getElementById('products');
-    wrap.innerHTML = '';
+/* ================== ЗАГРУЗКА ================== */
+async function load() {
+    try {
+        const r = await fetch('products.json?v=' + Date.now());
+        allProducts = await r.json();
+        renderCategories();
+        renderProducts(allProducts);
 
-    items.forEach(p => {
-        const count = cart[p.id] || 0;
+        if (tg) {
+            tg.ready();
+            tg.expand();
+        }
+    } catch (e) {
+        console.error('Ошибка загрузки:', e);
+    }
+}
 
-        wrap.innerHTML += `
-            <div class="card">
-                <b>${p.name}</b><br>
-                ${p.price} грн<br>
-                <button class="count-btn"
-                    onclick="addToCart(${p.id})">
-                    ${count ? count : '+'}
-                </button>
-            </div>
-        `;
+/* ================== КАТЕГОРИИ ================== */
+function renderCategories() {
+    const catList = document.getElementById('cat-list');
+    const cats = [...new Set(allProducts.map(p => p.category))].filter(Boolean);
+
+    cats.forEach(c => {
+        const btn = document.createElement('button');
+        btn.className = 'cat-btn';
+        btn.innerText = c;
+        btn.onclick = () => filter(c, btn);
+        catList.appendChild(btn);
     });
 }
 
-renderProducts(products);
-
-// ==== корзина ====
-function addToCart(id) {
-    cart[id] = (cart[id] || 0) + 1;
-    renderProducts(products);
+function filter(cat, btn) {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderProducts(getCurrentItems());
 }
 
-function openCart() {
-    updateCartUI();
-    document.getElementById('order-ui').style.display = 'block';
-}
+/* ================== ТОВАРЫ ================== */
+function renderProducts(items) {
+    const container = document.getElementById('container');
+    container.innerHTML = '';
 
-function lockUI() {
-    document.getElementById('ui-lock').style.display = 'block';
-}
-
-function unlockUI() {
-    document.getElementById('ui-lock').style.display = 'none';
-}
-
-// ==== UI корзины ====
-function updateCartUI() {
-    const box = document.getElementById('order-ui');
-
-    if (showingConfirmClear) {
-        box.innerHTML = `
-            <h3 style="color:red">Видалити всі товари?</h3>
-            <button onclick="cancelClear()">Відмінити</button>
-            <button style="background:red;color:white" onclick="confirmClear()">Підтвердити</button>
+    items.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.innerHTML = `
+            <div class="info-icon" onclick="showDesc('${p.name}', '${p.desc || 'Смачна позиція'}')">i</div>
+            <img src="${p.image || ''}" onerror="this.src='https://placehold.co/200?text=VIC+ODESSA'">
+            <div class="product-name">${p.name}</div>
+            <div class="card-footer">
+                <span class="price">${p.price} ₴</span>
+                <button class="add-btn" onclick="addToCart('${p.name}', ${p.price})">
+                    ${cart[p.name]?.quantity || '+'}
+                </button>
+            </div>
         `;
+        container.appendChild(card);
+    });
+
+    updateCartUI();
+}
+
+function getCurrentItems() {
+    const active = document.querySelector('.cat-btn.active');
+    if (!active || active.innerText === 'Всі') return allProducts;
+    return allProducts.filter(p => p.category === active.innerText);
+}
+
+/* ================== КОРЗИНА ================== */
+function addToCart(name, price) {
+    if (!cart[name]) cart[name] = { price, quantity: 0 };
+    cart[name].quantity++;
+    renderProducts(getCurrentItems());
+    updateCartUI();
+}
+
+function removeFromCart(name) {
+    if (!cart[name]) return;
+    cart[name].quantity--;
+    if (cart[name].quantity <= 0) delete cart[name];
+    renderProducts(getCurrentItems());
+    updateCartUI();
+}
+
+function toggleCart() {
+    const ui = document.getElementById('order-ui');
+    ui.style.display = ui.style.display === 'block' ? 'none' : 'block';
+    showingConfirmClear = false;
+    updateCartUI();
+}
+
+/* ================== UI КОРЗИНЫ ================== */
+function updateCartUI() {
+    const cartItems = document.getElementById('cart-items');
+    const cartTotal = document.getElementById('cart-total');
+    const cartCount = document.getElementById('cart-count');
+    const mainBtn = document.getElementById('main-button');
+
+    cartItems.innerHTML = '';
+    let totalQty = 0;
+    let totalSum = 0;
+
+    /* --- ПОДТВЕРЖДЕНИЕ ОЧИСТКИ --- */
+    if (showingConfirmClear) {
+        cartItems.innerHTML = `
+            <div style="
+                background:#ffecec;
+                border:1px solid #ff3b30;
+                border-radius:12px;
+                padding:12px;
+                margin-bottom:10px;
+                text-align:center;
+                color:#900;
+                font-weight:600;
+            ">
+                ⚠️ Ви точно бажаєте видалити <b>усі товари</b> з кошика?
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button style="flex:1" onclick="cancelClear()">Відмінити</button>
+                <button style="flex:1; background:#ff3b30; color:#fff" onclick="confirmClear()">Підтвердити</button>
+            </div>
+        `;
+        cartTotal.innerText = '';
         return;
     }
 
-    let html = '<h3>Ваше замовлення</h3>';
-    let sum = 0;
+    /* --- СПИСОК ТОВАРОВ --- */
+    for (let name in cart) {
+        const item = cart[name];
+        totalQty += item.quantity;
+        totalSum += item.price * item.quantity;
 
-    for (const id in cart) {
-        const p = products.find(x => x.id == id);
-        sum += p.price * cart[id];
-        html += `<div>${p.name} × ${cart[id]}</div>`;
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.justifyContent = 'space-between';
+        row.style.alignItems = 'center';
+        row.style.marginBottom = '6px';
+        row.innerHTML = `
+            <span>${name} (${item.quantity})</span>
+            <div>
+                <button onclick="removeFromCart('${name}')">−</button>
+                <button onclick="addToCart('${name}', ${item.price})">+</button>
+            </div>
+        `;
+        cartItems.appendChild(row);
     }
 
-    html += `
-        <p><b>Ітого: ${sum} грн</b></p>
-        <input id="name" placeholder="Імʼя">
-        <input id="phone" placeholder="Телефон">
-        <button onclick="sendOrder()">Пiдтвердити замовлення</button>
-        <button style="background:red;color:white" onclick="cancelOrder()">Очистити</button>
-    `;
-
-    box.innerHTML = html;
+    cartCount.innerText = totalQty;
+    cartTotal.innerText = totalQty ? `Ітого: ${totalSum} ₴` : '';
+    mainBtn.innerText = 'Пiдтвердити замовлення';
 }
 
+/* ================== ОЧИСТКА ================== */
 function cancelOrder() {
+    if (!Object.keys(cart).length) return;
     showingConfirmClear = true;
-    lockUI();
     updateCartUI();
 }
 
 function cancelClear() {
     showingConfirmClear = false;
-    unlockUI();
     updateCartUI();
 }
 
 function confirmClear() {
     cart = {};
     showingConfirmClear = false;
-    unlockUI();
     document.getElementById('order-ui').style.display = 'none';
-    renderProducts(products);
+    renderProducts(getCurrentItems());
+    updateCartUI();
 }
 
-// ==== отправка заказа ====
-async function sendOrder() {
+/* ================== ОФОРМЛЕНИЕ ================== */
+function handleButtonClick() {
+    if (!Object.keys(cart).length) return alert('Корзина порожня');
+    const name = document.getElementById('cust-name').value.trim();
+    const phone = document.getElementById('cust-phone').value.trim();
+    if (!name || !phone) return alert("Вкажіть ім'я та телефон");
+
+    executeOrderAlgorithm();
+}
+
+/* ================== ОТПРАВКА ЗАКАЗА ================== */
+async function executeOrderAlgorithm() {
     if (isSending) return;
+    isSending = true;
 
-    const name = document.getElementById('name')?.value.trim();
-    const phone = document.getElementById('phone')?.value.trim();
+    const btn = document.getElementById('main-button');
+    btn.classList.add('loading-state');
 
-    if (!name || !phone) {
-        alert('Заповніть імʼя та телефон');
+    const name = document.getElementById('cust-name').value.trim();
+    const phone = document.getElementById('cust-phone').value.trim();
+
+    let itemsText = '';
+    let sum = 0;
+
+    for (let n in cart) {
+        itemsText += `\n• ${n} (${cart[n].quantity} шт.)`;
+        sum += cart[n].price * cart[n].quantity;
+    }
+
+    const userId = tg?.initDataUnsafe?.user?.id || 'PC-USER';
+    const username = tg?.initDataUnsafe?.user?.username
+        ? `@${tg.initDataUnsafe.user.username}`
+        : '-';
+
+    const orderText = `👤 Клієнт: ${name}
+📞 Тел: ${phone}
+🆔 ID: ${userId} (${username})
+🛒 Товари:${itemsText}
+💰 Сума: ${sum} ₴`;
+
+    btn.innerText = 'ВІДПРАВКА...';
+
+    try {
+        await fetch(API_URL + '/api/send-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order: orderText, total: sum })
+        });
+    } catch (e) {
+        alert('Помилка відправки');
+        isSending = false;
         return;
     }
 
-    isSending = true;
+    /* --- ФИНАЛ --- */
+    btn.innerText = 'ГОТОВО!';
 
-    const userId = tg?.initDataUnsafe?.user?.id || 'PC-USER';
+    const finish = () => {
+        cart = {};
+        showingConfirmClear = false;
+        document.getElementById('order-ui').style.display = 'none';
+        document.getElementById('cust-name').value = '';
+        document.getElementById('cust-phone').value = '';
+        renderProducts(getCurrentItems());
+        updateCartUI();
+        btn.classList.remove('loading-state');
+        btn.innerText = 'Пiдтвердити замовлення';
+        isSending = false;
+    };
 
-    let text = `🛒 Нове замовлення\nID: ${userId}\nІмʼя: ${name}\nТелефон: ${phone}\n\n`;
-
-    for (const id in cart) {
-        const p = products.find(x => x.id == id);
-        text += `${p.name} × ${cart[id]}\n`;
-    }
-
-    await fetch('https://api.telegram.org/botXXXX/sendMessage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            chat_id: 'YYYY',
-            text
-        })
-    });
-
-    finishOrder();
-}
-
-function finishOrder() {
-    if (tg) {
+    if (tg && tg.showPopup) {
         tg.showPopup({
-            title: 'Готово',
-            message: 'Замовлення прийнято',
-            buttons: [{ type: 'ok' }]
+            title: 'Замовлення прийнято!',
+            message: 'Дякуємо! Ми вже готуємо ваше замовлення.',
+            buttons: [{ type: 'ok', text: 'OK' }]
         }, () => {
             tg.close();
+            finish();
         });
     } else {
-        showSuccessModal();
+        alert('Дякуємо! Ваше замовлення прийнято.');
+        finish();
     }
 }
 
-function showSuccessModal() {
-    document.getElementById('success-modal').style.display = 'flex';
+/* ================== ПРОЧЕЕ ================== */
+function showDesc(name, desc) {
+    if (tg) tg.showAlert(`${name}\n\n${desc}`);
+    else alert(`${name}\n\n${desc}`);
 }
 
-function closeSuccessModal() {
-    document.getElementById('success-modal').style.display = 'none';
-    resetAfterOrder();
-}
-
-function resetAfterOrder() {
-    cart = {};
-    isSending = false;
-    document.getElementById('order-ui').style.display = 'none';
-    renderProducts(products);
-}
+/* ================== START ================== */
+load();

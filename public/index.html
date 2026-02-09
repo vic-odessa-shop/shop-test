@@ -2,114 +2,133 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Shop</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vic Odessa Shop</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            font-family: sans-serif;
-            margin: 0;
-            padding: 12px;
-            background: #f5f5f5;
-        }
+        :root { --tg-color: #0088cc; --bg-color: #f4f4f7; --card-bg: #ffffff; --text-main: #222; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg-color); margin: 0; padding-bottom: 140px; color: var(--text-main); user-select: none; }
+        header { background: var(--card-bg); padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .categories { display: flex; overflow-x: auto; padding: 10px 5px; gap: 10px; scrollbar-width: none; }
+        .categories::-webkit-scrollbar { display: none; }
+        .cat-btn { background: #e0e0e0; border: none; padding: 8px 20px; border-radius: 20px; white-space: nowrap; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .cat-btn.active { background: var(--tg-color); color: #fff; }
 
-        .products {
+        .products-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 12px;
-        }
-
-        .card {
-            background: white;
-            border-radius: 12px;
+            gap: 8px;
             padding: 10px;
-            text-align: center;
-            position: relative;
         }
 
-        .count-btn {
-            margin-top: 6px;
-            padding: 6px 10px;
-            border-radius: 8px;
-            border: none;
-            background: #2196f3;
-            color: white;
-            cursor: pointer;
-            font-size: 16px;
+        .product-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+            min-width: 0;
         }
+
+        .info-icon { position: absolute; top: 5px; right: 5px; background: rgba(255,255,255,0.9); border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: var(--tg-color); cursor: pointer; border: 1px solid var(--tg-color); z-index: 2; }
+        .product-card img { width: 100%; height: 110px; object-fit: cover; border-radius: 10px; background: #eee; }
+
+        .product-name {
+            font-size: 13px;
+            font-weight: 600;
+            margin: 8px 0 4px 0;
+            height: 34px;
+            line-height: 1.2;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+        .price { font-weight: 800; font-size: 16px; }
+        .add-btn { background: var(--tg-color); color: #fff; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 20px; font-weight: bold; cursor: pointer; }
 
         #order-ui {
-            display: none;
             position: fixed;
-            inset: 0;
-            background: #ffffff;
-            z-index: 800;
-            padding: 16px;
-            overflow-y: auto;
-        }
-
-        input {
+            bottom: 0;
+            left: 0;
             width: 100%;
-            margin-bottom: 8px;
-            padding: 8px;
-            font-size: 16px;
+            background: var(--card-bg);
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+            border-radius: 20px 20px 0 0;
+            padding: 15px;
+            box-sizing: border-box;
+            z-index: 1000;
+            display: none; /* Скрыто по умолчанию */
         }
 
-        button {
-            padding: 10px;
-            font-size: 16px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
+        #cart-items div button { margin: 0 2px; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--tg-color); background:#fff; cursor:pointer; }
+
+        #customer-form input { width: 100%; padding: 12px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
+
+        .btn-group { display: flex; gap: 10px; margin-top:10px; }
+        #main-button { flex: 3; background: var(--tg-color); color: #fff; padding: 16px; border-radius: 14px; text-align: center; font-weight: bold; cursor: pointer; }
+        #cancel-button { flex: 1; background: #ff3b30; color: #fff; padding: 16px; border-radius: 14px; text-align: center; font-weight: bold; cursor: pointer; }
+
+        #shop-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            z-index: 500;
+            background: #fff;
+            padding: 10px 15px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+            font-size: 14px;
+            text-align: center;
         }
+        #shop-footer a { font-weight: 600; margin: 0 5px; text-decoration: none; }
+        #shop-footer a:hover { text-decoration: underline; }
     </style>
 </head>
-
 <body>
 
-<h2>Товари</h2>
+<header style="position:sticky; top:0; z-index:100; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,0.06); padding:10px;">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div style="font-weight:900; color:var(--tg-color); font-size:20px;">VIC ODESSA SHOP</div>
+    <div id="cart-btn" style="position:relative; cursor:pointer;" onclick="toggleCart()">
+      <img src="icons/ico1.png" style="width:28px; height:28px;">
+      <span id="cart-count" style="position:absolute; top:-6px; right:-6px; background:red; color:#fff; border-radius:50%; font-size:12px; width:18px; height:18px; display:flex; align-items:center; justify-content:center;">0</span>
+    </div>
+  </div>
 
-<div class="products" id="products"></div>
+  <div class="categories" id="cat-list" style="display:flex; overflow-x:auto; padding:8px 0; gap:8px;">
+    <button class="cat-btn active" onclick="filter('all', this)">Всі</button>
+  </div>
+</header>
 
-<button onclick="openCart()" style="margin-top:16px;width:100%">
-    🛒 Кошик
-</button>
+<div class="products-grid" id="container"></div>
 
-<!-- UI корзины -->
-<div id="order-ui"></div>
+<div id="order-ui">
+    <div id="cart-items"></div>
+    <div id="cart-total" style="margin-top:10px; font-weight:bold; font-size:16px;"></div>
 
-<!-- Блокировка интерфейса -->
-<div id="ui-lock" style="
-    display:none;
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,0.35);
-    z-index:900;
-"></div>
+    <div id="customer-form">
+        <input type="text" id="cust-name" placeholder="Ваше ім'я">
+        <input type="tel" id="cust-phone" placeholder="Номер телефону">
+    </div>
 
-<!-- Успешный заказ -->
-<div id="success-modal" style="
-    display:none;
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,0.45);
-    z-index:1000;
-    align-items:center;
-    justify-content:center;
-">
-    <div style="
-        background:#2e7d32;
-        color:white;
-        padding:24px;
-        border-radius:14px;
-        max-width:320px;
-        text-align:center;
-    ">
-        <h3>✅ Замовлення прийнято</h3>
-        <p>Дякуємо! Ми вже отримали ваше замовлення.</p>
-        <button onclick="closeSuccessModal()">OK</button>
+    <div class="btn-group">
+        <div id="cancel-button" onclick="cancelOrder()">❌ Очистити</div>
+        <div id="main-button" onclick="handleButtonClick()">Пiдтвердити замовлення</div>
     </div>
 </div>
+
+<footer id="shop-footer">
+    <div>📍 Адрес: м. Одеса, вул. Дерибасівська, 1</div>
+    <div style="margin-top:5px;">
+        <a href="https://t.me/vicodessashop" target="_blank" style="color:#0088cc;">Telegram</a>
+        <a href="viber://chat?number=%2B380000000000" target="_blank" style="color:#59267c;">Viber</a>
+    </div>
+</footer>
 
 <script src="app.js"></script>
 </body>
