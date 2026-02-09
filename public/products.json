@@ -75,9 +75,9 @@
     "id": 1769957108806,
     "name": "Продукты мои",
     "price": 800,
-    "category": "Пицца ",
+    "stock": 10,
+    "category": "Піца",
     "image": "https://loremflickr.com/300/300/food",
-    "description": "Смачний опис",
-    "stock": 10
+    "description": "Пицца вкууснаяяя "
   }
 ]
