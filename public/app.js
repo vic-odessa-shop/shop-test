@@ -56,7 +56,7 @@ function renderProducts(items) {
             <div class="product-name">${p.name}</div>
             <div class="card-footer">
                 <span class="price">${p.price} ₴</span>
-                <button class="add-btn" onclick="addTocart('${p.name}',${p.price})">
+                <button class="add-btn" onclick="addToCart('${p.name}',${p.price})">
                     ${qty ? qty : '+'}
                 </button>
             </div>
@@ -267,7 +267,7 @@ function showDescModal(nameEnc, descEnc, imgEnc) {
     document.getElementById('desc-text').innerText = decodeURIComponent(descEnc || 'Смачна позиція наш ого меню');
     document.getElementById('desc-img').src = decodeURIComponent(imgEnc || '');
     modal.style.display = 'flex';
-    console.log(deskEnc);
+    
 }
 
 function closeDescModal() {
